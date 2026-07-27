@@ -17,6 +17,43 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useGroups } from "./GroupsContext";
 
+// "1400" -> "14:00" ko'rinishida, faqat raqamlar, soat 00-23, minut 00-59
+function formatTimeDigits(raw) {
+  const digits = raw.replace(/\D/g, "").slice(0, 4);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  let hh = digits.slice(0, 2);
+  let mm = digits.slice(2, 4);
+
+  if (parseInt(hh, 10) > 23) hh = "23";
+
+  if (mm.length === 2 && parseInt(mm, 10) > 59) mm = "59";
+
+  return `${hh}:${mm}`;
+}
+
+// faqat harflar, har 2 harfdan keyin "-" avtomatik, jami 6 harf (3 ta kun)
+// har bir kun: birinchi harf katta, ikkinchisi kichik -> "Mo", "We", "Fr"
+function formatDaysLetters(raw) {
+  const letters = raw.replace(/[^a-zA-Z]/g, "").slice(0, 6);
+
+  const groups = [];
+  for (let i = 0; i < letters.length; i += 2) {
+    groups.push(letters.slice(i, i + 2));
+  }
+
+  const formatted = groups.map((g) => {
+    if (g.length === 0) return g;
+    if (g.length === 1) return g[0].toUpperCase();
+    return g[0].toUpperCase() + g[1].toLowerCase();
+  });
+
+  return formatted.join("-");
+}
+
 function SortableGroupCard({
   group,
   editMode,
@@ -94,7 +131,11 @@ export default function Group() {
   const { groups, addGroup, loading, deleteGroups, reorderGroups } =
     useGroups();
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", time: "", days: "" });
+  const [form, setForm] = useState({
+    name: "",
+    time: "",
+    days: "",
+  });
   const [editMode, setEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -112,8 +153,17 @@ export default function Group() {
     );
   }
 
+  const handleTimeChange = (e) => {
+    setForm({ ...form, time: formatTimeDigits(e.target.value) });
+  };
+
+  const handleDaysChange = (e) => {
+    setForm({ ...form, days: formatDaysLetters(e.target.value) });
+  };
+
   const handleCreate = () => {
     if (!form.name.trim()) return;
+
     addGroup({ name: form.name, time: form.time, days: form.days });
     setForm({ name: "", time: "", days: "" });
     setFormOpen(false);
@@ -187,19 +237,24 @@ export default function Group() {
                 className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
               />
 
+              {/* Lesson time: raqam kiritilganda avtomatik "HH:MM" (24 soatlik) */}
               <input
                 type="text"
-                placeholder="Lesson time"
+                inputMode="numeric"
+                placeholder="Lesson time (14:00)"
                 value={form.time}
-                onChange={(e) => setForm({ ...form, time: e.target.value })}
+                onChange={handleTimeChange}
+                maxLength={5}
                 className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
               />
 
+              {/* Lesson days: harflar kiritilganda avtomatik "Mo-We-Fr" formatida, jami 6 harf */}
               <input
                 type="text"
-                placeholder="Lesson days"
+                placeholder="Lesson days (Mo-We-Fr)"
                 value={form.days}
-                onChange={(e) => setForm({ ...form, days: e.target.value })}
+                onChange={handleDaysChange}
+                maxLength={8}
                 className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
               />
 

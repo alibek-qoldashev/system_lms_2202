@@ -4,7 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import Home from "./pages/Home";
 import Group from "./pages/Group";
 import GroupDetail from "./pages/GroupDetail";
-import Attendance from "./pages/Attendance"; // Attendance sahifasi qo'shildi
+import Attendance from "./pages/Attendance"; 
 import { GroupsProvider } from "./pages/GroupsContext";
 
 function isAuthenticated() {

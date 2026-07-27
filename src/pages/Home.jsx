@@ -6,7 +6,7 @@ const menuCards = [
   {
     key: "attendence",
     label: "Attendence",
-    path: null,
+    path: "/attendance",
     icon: (
       <ClipboardCheck className="w-10 h-10 text-blue-600" strokeWidth={2} />
     ),

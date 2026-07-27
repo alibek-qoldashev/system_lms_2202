@@ -9,7 +9,6 @@ import { supabase } from "../supabaseClient";
 
 const GroupsContext = createContext(null);
 
-
 export function GroupsProvider({ children }) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +76,30 @@ export function GroupsProvider({ children }) {
     ]);
   };
 
+  const updateGroup = async (groupId, updates) => {
+    const { error } = await supabase
+      .from("groups")
+      .update({
+        name: updates.name,
+        lesson_time: updates.time,
+        lesson_days: updates.days,
+      })
+      .eq("id", groupId);
+
+    if (error) {
+      console.error("Guruhni yangilashda xatolik:", error);
+      return;
+    }
+
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === groupId
+          ? { ...g, name: updates.name, time: updates.time, days: updates.days }
+          : g,
+      ),
+    );
+  };
+
   const addStudent = async (groupId, student) => {
     const group = groups.find((g) => g.id === groupId);
     const position = group ? group.students.length : 0;
@@ -104,10 +127,53 @@ export function GroupsProvider({ children }) {
         g.id === groupId
           ? {
               ...g,
-              students: [...g.students, { ...data, paymentSum: data.payment_sum }],
+              students: [
+                ...g.students,
+                { ...data, paymentSum: data.payment_sum },
+              ],
             }
-          : g
-      )
+          : g,
+      ),
+    );
+  };
+
+  const updateStudent = async (groupId, studentId, updates) => {
+    const { error } = await supabase
+      .from("students")
+      .update({
+        name: updates.name,
+        surname: updates.surname,
+        age: updates.age ? Number(updates.age) : null,
+        phone: updates.phone,
+        payment_sum: updates.paymentSum || null,
+      })
+      .eq("id", studentId);
+
+    if (error) {
+      console.error("Talabani yangilashda xatolik:", error);
+      return;
+    }
+
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              students: g.students.map((s) =>
+                s.id === studentId
+                  ? {
+                      ...s,
+                      name: updates.name,
+                      surname: updates.surname,
+                      age: updates.age ? Number(updates.age) : null,
+                      phone: updates.phone,
+                      paymentSum: updates.paymentSum,
+                    }
+                  : s,
+              ),
+            }
+          : g,
+      ),
     );
   };
 
@@ -128,16 +194,19 @@ export function GroupsProvider({ children }) {
           ? {
               ...g,
               students: g.students.map((s) =>
-                s.id === studentId ? { ...s, paymentSum } : s
+                s.id === studentId ? { ...s, paymentSum } : s,
               ),
             }
-          : g
-      )
+          : g,
+      ),
     );
   };
 
   const deleteStudents = async (groupId, studentIds) => {
-    const { error } = await supabase.from("students").delete().in("id", studentIds);
+    const { error } = await supabase
+      .from("students")
+      .delete()
+      .in("id", studentIds);
 
     if (error) {
       console.error("Talabalarni o'chirishda xatolik:", error);
@@ -147,22 +216,25 @@ export function GroupsProvider({ children }) {
     setGroups((prev) =>
       prev.map((g) =>
         g.id === groupId
-          ? { ...g, students: g.students.filter((s) => !studentIds.includes(s.id)) }
-          : g
-      )
+          ? {
+              ...g,
+              students: g.students.filter((s) => !studentIds.includes(s.id)),
+            }
+          : g,
+      ),
     );
   };
 
   const reorderStudents = async (groupId, newStudents) => {
     // UI'ni darhol yangilaymiz, keyin serverga saqlaymiz
     setGroups((prev) =>
-      prev.map((g) => (g.id === groupId ? { ...g, students: newStudents } : g))
+      prev.map((g) => (g.id === groupId ? { ...g, students: newStudents } : g)),
     );
 
     const results = await Promise.all(
       newStudents.map((s, index) =>
-        supabase.from("students").update({ position: index }).eq("id", s.id)
-      )
+        supabase.from("students").update({ position: index }).eq("id", s.id),
+      ),
     );
 
     const failed = results.find((r) => r.error);
@@ -186,12 +258,13 @@ export function GroupsProvider({ children }) {
 
     const results = await Promise.all(
       newGroups.map((g, index) =>
-        supabase.from("groups").update({ position: index }).eq("id", g.id)
-      )
+        supabase.from("groups").update({ position: index }).eq("id", g.id),
+      ),
     );
 
     const failed = results.find((r) => r.error);
-    if (failed) console.error("Guruhlar tartibini saqlashda xatolik:", failed.error);
+    if (failed)
+      console.error("Guruhlar tartibini saqlashda xatolik:", failed.error);
   };
 
   const getGroup = (groupId) =>
@@ -203,7 +276,9 @@ export function GroupsProvider({ children }) {
         groups,
         loading,
         addGroup,
+        updateGroup,
         addStudent,
+        updateStudent,
         updatePaymentSum,
         deleteStudents,
         reorderStudents,
