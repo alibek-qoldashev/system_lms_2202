@@ -4,7 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import Home from "./pages/Home";
 import Group from "./pages/Group";
 import GroupDetail from "./pages/GroupDetail";
-import { GroupsProvider } from "./pages/Groupscontext";
+import { GroupsProvider } from "./pages/GroupsContext";
 
 function isAuthenticated() {
   return localStorage.getItem("isAuthenticated") === "true";
