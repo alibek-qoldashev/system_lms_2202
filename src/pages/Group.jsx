@@ -17,9 +17,21 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useGroups } from "./GroupsContext";
 
-function SortableGroupCard({ group, editMode, selected, onToggleSelect, onOpen }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: group.id, disabled: !editMode });
+function SortableGroupCard({
+  group,
+  editMode,
+  selected,
+  onToggleSelect,
+  onOpen,
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: group.id, disabled: !editMode });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -79,14 +91,15 @@ function SortableGroupCard({ group, editMode, selected, onToggleSelect, onOpen }
 
 export default function Group() {
   const navigate = useNavigate();
-  const { groups, addGroup, loading, deleteGroups, reorderGroups } = useGroups();
+  const { groups, addGroup, loading, deleteGroups, reorderGroups } =
+    useGroups();
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ name: "", time: "", days: "" });
   const [editMode, setEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
   const view = formOpen ? "form" : groups.length === 0 ? "empty" : "list";
@@ -108,7 +121,9 @@ export default function Group() {
 
   const toggleSelect = (groupId) => {
     setSelectedIds((prev) =>
-      prev.includes(groupId) ? prev.filter((i) => i !== groupId) : [...prev, groupId]
+      prev.includes(groupId)
+        ? prev.filter((i) => i !== groupId)
+        : [...prev, groupId],
     );
   };
 
@@ -127,7 +142,14 @@ export default function Group() {
 
   return (
     <div className="min-h-screen w-full flex justify-center bg-[#00173d]">
-      <div className="w-full max-w-md flex flex-col items-center px-6 pt-16 pb-10">
+      <div className="w-full max-w-md flex flex-col items-center px-6 pt-14 pb-10">
+        <button
+          onClick={() => navigate("/home")}
+          className="self-start text-slate-200 font-semibold mb-4"
+        >
+          ← Home
+        </button>
+
         {/* Empty state */}
         {view === "empty" && (
           <>
