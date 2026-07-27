@@ -179,7 +179,7 @@ export default function GroupDetail() {
           ← Groups
         </button>
 
-        <h1 className="text-3xl font-bold text-slate-900 text-center">
+        <h1 className="text-3xl font-bold text-white text-slate-900 text-center">
           {group.name}
         </h1>
 
