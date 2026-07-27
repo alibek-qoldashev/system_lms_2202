@@ -179,9 +179,11 @@ export default function GroupDetail() {
           ← Groups
         </button>
 
-        <h1 className="text-3xl font-bold text-white text-slate-900 text-center">
+        <h1 className="text-3xl font-bold text-white text-center">
           {group.name}
-        </h1>
+        </h1>git add .
+git commit -m "Fix file name casing for GroupsContext"
+git push origin main
 
         {/* Empty state */}
         {!formOpen && group.students.length === 0 && (
