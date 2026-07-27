@@ -9,6 +9,14 @@ import { supabase } from "../supabaseClient";
 
 const GroupsContext = createContext(null);
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
 export function GroupsProvider({ children }) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +50,24 @@ export function GroupsProvider({ children }) {
       days: g.lesson_days,
       students: (studentsData || [])
         .filter((s) => s.group_id === g.id)
-        .map((s) => ({ ...s, paymentSum: s.payment_sum })),
+        .map((s) => {
+          let history = [];
+          if (s.payment_history) {
+            try {
+              history =
+                typeof s.payment_history === "string"
+                  ? JSON.parse(s.payment_history)
+                  : s.payment_history;
+            } catch (e) {
+              history = [];
+            }
+          }
+          return {
+            ...s,
+            paymentSum: Number(s.payment_sum) || 0,
+            paymentHistory: Array.isArray(history) ? history : [],
+          };
+        }),
     }));
 
     setGroups(merged);
@@ -113,6 +138,8 @@ export function GroupsProvider({ children }) {
         age: student.age ? Number(student.age) : null,
         phone: student.phone,
         position,
+        payment_sum: 0,
+        payment_history: [],
       })
       .select()
       .single();
@@ -129,7 +156,11 @@ export function GroupsProvider({ children }) {
               ...g,
               students: [
                 ...g.students,
-                { ...data, paymentSum: data.payment_sum },
+                {
+                  ...data,
+                  paymentSum: 0,
+                  paymentHistory: [],
+                },
               ],
             }
           : g,
@@ -145,7 +176,7 @@ export function GroupsProvider({ children }) {
         surname: updates.surname,
         age: updates.age ? Number(updates.age) : null,
         phone: updates.phone,
-        payment_sum: updates.paymentSum || null,
+        payment_sum: updates.paymentSum ?? 0,
       })
       .eq("id", studentId);
 
@@ -167,7 +198,7 @@ export function GroupsProvider({ children }) {
                       surname: updates.surname,
                       age: updates.age ? Number(updates.age) : null,
                       phone: updates.phone,
-                      paymentSum: updates.paymentSum,
+                      paymentSum: updates.paymentSum ?? s.paymentSum,
                     }
                   : s,
               ),
@@ -177,14 +208,73 @@ export function GroupsProvider({ children }) {
     );
   };
 
-  const updatePaymentSum = async (groupId, studentId, paymentSum) => {
+  // Yangi to'lov saqlash (students.payment_history ustuniga yozadi)
+  const addPayment = async (groupId, studentId, amount) => {
+    const numAmount = Number(amount);
+    if (!numAmount || numAmount <= 0) return { error: "Noto'g'ri summa" };
+
+    const group = groups.find((g) => g.id === groupId);
+    const student = group?.students.find((s) => s.id === studentId);
+    if (!student) return { error: "O'quvchi topilmadi" };
+
+    const newPaymentSum = (Number(student.paymentSum) || 0) + numAmount;
+    const newRecord = {
+      id: Date.now().toString(),
+      amount: numAmount,
+      date: todayISO(),
+    };
+    const updatedHistory = [newRecord, ...(student.paymentHistory || [])];
+
+    const { error: studentError } = await supabase
+      .from("students")
+      .update({
+        payment_sum: newPaymentSum,
+        payment_history: updatedHistory,
+      })
+      .eq("id", studentId);
+
+    if (studentError) {
+      console.error("To'lovni saqlashda xatolik:", studentError);
+      return { error: studentError.message };
+    }
+
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              students: g.students.map((s) =>
+                s.id === studentId
+                  ? {
+                      ...s,
+                      paymentSum: newPaymentSum,
+                      paymentHistory: updatedHistory,
+                    }
+                  : s,
+              ),
+            }
+          : g,
+      ),
+    );
+
+    return { error: null };
+  };
+
+  // Davomatda balansni kamaytirish/oshirish uchun
+  const adjustPaymentSum = async (groupId, studentId, delta) => {
+    const group = groups.find((g) => g.id === groupId);
+    const student = group?.students.find((s) => s.id === studentId);
+    if (!student) return;
+
+    const newPaymentSum = (Number(student.paymentSum) || 0) + delta;
+
     const { error } = await supabase
       .from("students")
-      .update({ payment_sum: paymentSum || null })
+      .update({ payment_sum: newPaymentSum })
       .eq("id", studentId);
 
     if (error) {
-      console.error("To'lovni yangilashda xatolik:", error);
+      console.error("Balansni o'zgartirishda xatolik:", error);
       return;
     }
 
@@ -194,7 +284,7 @@ export function GroupsProvider({ children }) {
           ? {
               ...g,
               students: g.students.map((s) =>
-                s.id === studentId ? { ...s, paymentSum } : s,
+                s.id === studentId ? { ...s, paymentSum: newPaymentSum } : s,
               ),
             }
           : g,
@@ -226,7 +316,6 @@ export function GroupsProvider({ children }) {
   };
 
   const reorderStudents = async (groupId, newStudents) => {
-    // UI'ni darhol yangilaymiz, keyin serverga saqlaymiz
     setGroups((prev) =>
       prev.map((g) => (g.id === groupId ? { ...g, students: newStudents } : g)),
     );
@@ -253,7 +342,6 @@ export function GroupsProvider({ children }) {
   };
 
   const reorderGroups = async (newGroups) => {
-    // UI'ni darhol yangilaymiz, keyin serverga saqlaymiz
     setGroups(newGroups);
 
     const results = await Promise.all(
@@ -279,7 +367,8 @@ export function GroupsProvider({ children }) {
         updateGroup,
         addStudent,
         updateStudent,
-        updatePaymentSum,
+        addPayment,
+        adjustPaymentSum,
         deleteStudents,
         reorderStudents,
         deleteGroups,
@@ -298,3 +387,5 @@ export function useGroups() {
   if (!ctx) throw new Error("useGroups must be used within a GroupsProvider");
   return ctx;
 }
+
+export default GroupsContext;

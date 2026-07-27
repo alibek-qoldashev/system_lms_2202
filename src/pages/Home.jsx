@@ -12,38 +12,56 @@ const menuCards = [
     ),
   },
   {
-    key: "tests",
-    label: "Tests",
-    path: null,
+    key: "payment",
+    label: "Payment",
+    path: "/payment",
     icon: (
-      <div className="relative w-10 h-10 flex items-center justify-center">
-        <svg
-          viewBox="0 0 24 24"
-          className="w-10 h-10 text-blue-600"
-          fill="currentColor"
-        >
-          <path
-            d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"
-            opacity="0.15"
-          />
-          <path
-            d="M14 2v5a1 1 0 0 0 1 1h5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        </svg>
-        <span className="absolute text-xs font-extrabold text-white bg-blue-600 rounded px-1">
-          A+
-        </span>
-      </div>
-    ),
+  <div className="relative w-10 h-10 flex items-center justify-center">
+    <svg
+      viewBox="0 0 24 24"
+      className="w-10 h-10 text-blue-600"
+      fill="currentColor"
+    >
+      {/* Karta foning yorug' joyi */}
+      <rect
+        x="2"
+        y="5"
+        width="20"
+        height="14"
+        rx="3"
+        opacity="0.15"
+      />
+      {/* Karta konturi */}
+      <rect
+        x="2"
+        y="5"
+        width="20"
+        height="14"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      {/* Magnit tasmasi */}
+      <path
+        d="M2 10h20"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      {/* Kichik to'lov chiplari/chiziqlari */}
+      <path
+        d="M6 15h4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+    {/* Burchakdagi to'lov belgisi ($ yoki UZS) */}
+    <span className="absolute -bottom-0.5 -right-0.5 text-[10px] font-extrabold text-white bg-blue-600 rounded-full w-4 h-4 flex items-center justify-center shadow">
+      $
+    </span>
+  </div>
+),
   },
   {
     key: "groups",
@@ -51,7 +69,10 @@ const menuCards = [
     path: "/groups",
     icon: <ListChecks className="w-10 h-10 text-blue-600" strokeWidth={2} />,
   },
-  { key: "upcoming1", label: "Upcoming...", path: null, icon: null },
+  { key: "upcoming1", 
+    label: "Upcoming...", 
+    path: null, 
+    icon: null },
   { key: "upcoming2", label: "Upcoming...", path: null, icon: null },
   { key: "upcoming3", label: "Upcoming...", path: null, icon: null },
 ];

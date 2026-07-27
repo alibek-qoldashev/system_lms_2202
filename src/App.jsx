@@ -4,8 +4,9 @@ import LoginPage from "./pages/LoginPage";
 import Home from "./pages/Home";
 import Group from "./pages/Group";
 import GroupDetail from "./pages/GroupDetail";
-import Attendance from "./pages/Attendance"; 
+import Attendance from "./pages/Attendance";
 import { GroupsProvider } from "./pages/GroupsContext";
+import Payment from "./pages/Payment";
 
 function isAuthenticated() {
   return localStorage.getItem("isAuthenticated") === "true";
@@ -57,6 +58,14 @@ const App = () => {
             element={
               <RequireAuth>
                 <Attendance />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/payment"
+            element={
+              <RequireAuth>
+                <Payment />
               </RequireAuth>
             }
           />
