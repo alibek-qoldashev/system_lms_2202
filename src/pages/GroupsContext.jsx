@@ -7,6 +7,18 @@ import React, {
 } from "react";
 import { supabase } from "../supabaseClient";
 
+function lastDigits(phone, n = 4) {
+  const digitsOnly = (phone || "").replace(/\D/g, "");
+  return digitsOnly.slice(-n) || "0000";
+}
+
+// "" / undefined / null bo'lsa null qaytaradi, aks holda Number() ga o'giradi.
+// Muhim: 0 qiymatini ham to'g'ri saqlaydi ("value ? Number(value) : null" 0 ni yo'qotardi).
+function toNumberOrNull(value) {
+  if (value === "" || value === undefined || value === null) return null;
+  return Number(value);
+}
+
 const GroupsContext = createContext(null);
 
 function pad2(n) {
@@ -130,6 +142,7 @@ export function GroupsProvider({ children }) {
   const addStudent = async (groupId, student) => {
     const group = groups.find((g) => g.id === groupId);
     const position = group ? group.students.length : 0;
+    const age = toNumberOrNull(student.age);
 
     const { data, error } = await supabase
       .from("students")
@@ -137,12 +150,13 @@ export function GroupsProvider({ children }) {
         group_id: groupId,
         name: student.name,
         surname: student.surname,
-        age: student.age ? Number(student.age) : null,
+        age,
         phone: student.phone,
         position,
         payment_sum: 0,
         payment_history: [],
         lesson_price: 0,
+        password: lastDigits(student.phone),
       })
       .select()
       .single();
@@ -164,6 +178,7 @@ export function GroupsProvider({ children }) {
                   paymentSum: 0,
                   paymentHistory: [],
                   lessonPrice: 0,
+                  coins: 0,
                 },
               ],
             }
@@ -173,20 +188,34 @@ export function GroupsProvider({ children }) {
   };
 
   const updateStudent = async (groupId, studentId, updates) => {
+    const group = groups.find((g) => g.id === groupId);
+    const existingStudent = group?.students.find((s) => s.id === studentId);
+
+    const age = toNumberOrNull(updates.age);
+    // Agar paymentSum berilmagan bo'lsa, mavjud qiymatni saqlaymiz —
+    // avval bu holatda bazaga 0 yozib yuborilardi, local state esa eskisini
+    // ko'rsatardi, sahifa yangilanganda balans kutilmaganda 0 ga tushib qolardi.
+    const paymentSum =
+      updates.paymentSum === undefined ||
+      updates.paymentSum === null ||
+      updates.paymentSum === ""
+        ? Number(existingStudent?.paymentSum) || 0
+        : Number(updates.paymentSum);
+
     const { error } = await supabase
       .from("students")
       .update({
         name: updates.name,
         surname: updates.surname,
-        age: updates.age ? Number(updates.age) : null,
+        age,
         phone: updates.phone,
-        payment_sum: updates.paymentSum ?? 0,
+        payment_sum: paymentSum,
       })
       .eq("id", studentId);
 
     if (error) {
       console.error("Talabani yangilashda xatolik:", error);
-      return;
+      return { error: error.message };
     }
 
     setGroups((prev) =>
@@ -200,9 +229,9 @@ export function GroupsProvider({ children }) {
                       ...s,
                       name: updates.name,
                       surname: updates.surname,
-                      age: updates.age ? Number(updates.age) : null,
+                      age,
                       phone: updates.phone,
-                      paymentSum: updates.paymentSum ?? s.paymentSum,
+                      paymentSum,
                     }
                   : s,
               ),
@@ -210,9 +239,40 @@ export function GroupsProvider({ children }) {
           : g,
       ),
     );
+
+    return { error: null };
   };
 
-  // Yangi to'lov saqlash: balансga qo'shiladi, tarixga yoziladi,
+  // Talaba (yoki admin) login parolini o'zgartirish uchun.
+  // StudentSettings.jsx shu funksiyani chaqiradi.
+  const updateStudentPassword = async (studentId, newPassword) => {
+    if (!newPassword || !newPassword.trim()) {
+      return { error: "Parol bo'sh bo'lishi mumkin emas" };
+    }
+
+    const { error } = await supabase
+      .from("students")
+      .update({ password: newPassword })
+      .eq("id", studentId);
+
+    if (error) {
+      console.error("Parolni yangilashda xatolik:", error);
+      return { error: error.message };
+    }
+
+    setGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        students: g.students.map((s) =>
+          s.id === studentId ? { ...s, password: newPassword } : s,
+        ),
+      })),
+    );
+
+    return { error: null };
+  };
+
+  // Yangi to'lov saqlash: balansga qo'shiladi, tarixga yoziladi,
   // va shu to'lov summasi 12 ga bo'linib "1 dars narxi" (lesson_price) sifatida saqlanadi.
   const addPayment = async (groupId, studentId, amount) => {
     const numAmount = Number(amount);
@@ -358,6 +418,7 @@ export function GroupsProvider({ children }) {
   };
 
   const reorderStudents = async (groupId, newStudents) => {
+    const prevGroups = groups;
     setGroups((prev) =>
       prev.map((g) => (g.id === groupId ? { ...g, students: newStudents } : g)),
     );
@@ -369,7 +430,11 @@ export function GroupsProvider({ children }) {
     );
 
     const failed = results.find((r) => r.error);
-    if (failed) console.error("Tartibni saqlashda xatolik:", failed.error);
+    if (failed) {
+      console.error("Tartibni saqlashda xatolik:", failed.error);
+      // Saqlash muvaffaqiyatsiz bo'lsa, oldingi holatga qaytaramiz
+      setGroups(prevGroups);
+    }
   };
 
   const deleteGroups = async (groupIds) => {
@@ -384,6 +449,7 @@ export function GroupsProvider({ children }) {
   };
 
   const reorderGroups = async (newGroups) => {
+    const prevGroups = groups;
     setGroups(newGroups);
 
     const results = await Promise.all(
@@ -393,8 +459,10 @@ export function GroupsProvider({ children }) {
     );
 
     const failed = results.find((r) => r.error);
-    if (failed)
+    if (failed) {
       console.error("Guruhlar tartibini saqlashda xatolik:", failed.error);
+      setGroups(prevGroups);
+    }
   };
 
   const getGroup = (groupId) =>
@@ -409,6 +477,7 @@ export function GroupsProvider({ children }) {
         updateGroup,
         addStudent,
         updateStudent,
+        updateStudentPassword,
         addPayment,
         adjustPaymentSum,
         adjustCoins,

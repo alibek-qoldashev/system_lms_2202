@@ -190,6 +190,7 @@ export default function Group() {
                       selected={selectedIds.includes(group.id)}
                       onToggleSelect={toggleSelect}
                       onOpen={() => navigate(`/groups/${group.id}`)}
+                      onLongPress={() => setEditMode(true)}
                     />
                   ))}
                 </div>

@@ -1,20 +1,40 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useStudentAuth } from "../context/StudentAuthContext";
+
+const TEACHER_USERNAME = "Viloyat";
+const TEACHER_PASSWORD = "2202";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { login: studentLogin } = useStudentAuth();
 
-  const handleNext = () => {
-    if (username === "Viloyat" && password === "2202") {
-      setError("");
+  const handleNext = async () => {
+    if (!username.trim() || !password.trim()) return;
+    setError("");
+
+    // 1) Avval o'qituvchi login/parolini tekshiramiz
+    if (username === TEACHER_USERNAME && password === TEACHER_PASSWORD) {
       localStorage.setItem("isAuthenticated", "true");
       navigate("/home");
-    } else {
-      setError("Incorrect Password");
+      return;
     }
+
+    // 2) Mos kelmasa — student sifatida urinib ko'ramiz
+    setSubmitting(true);
+    const res = await studentLogin(username, password);
+    setSubmitting(false);
+
+    if (res.error) {
+      setError("Incorrect login or password");
+      return;
+    }
+
+    navigate("/studenthome");
   };
 
   return (
@@ -42,6 +62,7 @@ export default function LoginPage() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              autoComplete="off"
               className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
             />
 
@@ -62,9 +83,10 @@ export default function LoginPage() {
 
             <button
               onClick={handleNext}
-              className="w-full mt-3 rounded-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-xl font-bold py-4 shadow-md transition"
+              disabled={submitting}
+              className="w-full mt-3 rounded-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 text-white text-xl font-bold py-4 shadow-md transition"
             >
-              Next
+              {submitting ? "Tekshirilmoqda..." : "Next"}
             </button>
           </div>
         </div>

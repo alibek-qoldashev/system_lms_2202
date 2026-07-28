@@ -4,7 +4,7 @@ import { X, Plus, Minus } from "lucide-react";
 const GRADE_CATEGORIES = [
   { key: "homework", label: "Homework", max: 100 },
   { key: "classwork", label: "Classwork", max: 200 },
-  { key: "extrawork", label: "Extrawork", max: 50 },
+  { key: "extrawork", label: "Extrawork" },
   { key: "tartib", label: "Tartib", max: 100 },
 ];
 
@@ -17,7 +17,9 @@ export default function GradeModal({ student, onClose, onSave }) {
   // Ayirish tanlanganda faqat Tartib va Homework ko'rsatiladi
   const availableCategories =
     mode === "subtract"
-      ? GRADE_CATEGORIES.filter((c) => c.key === "tartib" || c.key === "homework")
+      ? GRADE_CATEGORIES.filter(
+          (c) => c.key === "tartib" || c.key === "homework",
+        )
       : GRADE_CATEGORIES;
 
   const currentCategory = GRADE_CATEGORIES.find((c) => c.key === category);
@@ -84,7 +86,9 @@ export default function GradeModal({ student, onClose, onSave }) {
           <button
             onClick={() => selectMode("add")}
             className={`flex-1 rounded-full py-2.5 text-sm font-bold flex items-center justify-center gap-1 transition ${
-              mode === "add" ? "bg-green-500 text-white shadow" : "text-slate-600"
+              mode === "add"
+                ? "bg-green-500 text-white shadow"
+                : "text-slate-600"
             }`}
           >
             <Plus className="w-4 h-4" /> Qo'shish
@@ -92,7 +96,9 @@ export default function GradeModal({ student, onClose, onSave }) {
           <button
             onClick={() => selectMode("subtract")}
             className={`flex-1 rounded-full py-2.5 text-sm font-bold flex items-center justify-center gap-1 transition ${
-              mode === "subtract" ? "bg-red-500 text-white shadow" : "text-slate-600"
+              mode === "subtract"
+                ? "bg-red-500 text-white shadow"
+                : "text-slate-600"
             }`}
           >
             <Minus className="w-4 h-4" /> Ayirish
@@ -136,7 +142,9 @@ export default function GradeModal({ student, onClose, onSave }) {
               onChange={(e) => handleAmountChange(e.target.value)}
               placeholder={`Coins (max ${currentCategory.max})`}
               className={`w-full rounded-xl border px-4 py-3 text-slate-800 outline-none focus:border-blue-500 mb-4 ${
-                exceedsMax ? "border-red-400 focus:border-red-500" : "border-slate-200"
+                exceedsMax
+                  ? "border-red-400 focus:border-red-500"
+                  : "border-slate-200"
               }`}
             />
 

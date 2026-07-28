@@ -201,13 +201,13 @@ export default function GroupDetail() {
           ← Groups
         </button>
 
-        <div className="w-full flex items-center justify-center relative">
-          <h1 className="text-3xl font-bold text-white text-center px-8">
+        <div className="bg-white p-5 rounded-[40px] w-full flex items-center justify-center relative">
+          <h1 className="text-xl font-bold  text-center px-8">
             {group.name}
           </h1>
           <button
             onClick={openGroupEdit}
-            className="absolute right-0 text-white"
+            className="absolute right-5 text-black"
             aria-label="Edit group"
           >
             <Pencil className="w-5 h-5" />

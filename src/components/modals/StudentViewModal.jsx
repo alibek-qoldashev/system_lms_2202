@@ -1,10 +1,19 @@
-import React from "react";
-import { X } from "lucide-react";
+import React, { useState } from "react";
+import { X, Eye, EyeOff } from "lucide-react";
 import Modal from "../Modal";
 
 export default function StudentViewModal({ student, onClose, onEdit }) {
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Modal yopilganda parol ko'rinishini qayta yashiramiz, keyingi safar
+  // boshqa/o'sha talaba ochilganda tasodifan ochiq qolib ketmasin.
+  const handleClose = () => {
+    setShowPassword(false);
+    onClose();
+  };
+
   return (
-    <Modal open={!!student} onClose={onClose}>
+    <Modal open={!!student} onClose={handleClose}>
       {student && (
         <>
           <div className="flex items-center justify-between mb-6">
@@ -12,7 +21,7 @@ export default function StudentViewModal({ student, onClose, onEdit }) {
               Student details
             </h3>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-slate-500"
               aria-label="Close"
             >
@@ -46,6 +55,35 @@ export default function StudentViewModal({ student, onClose, onEdit }) {
             <div>
               <p className="text-xs text-slate-500 uppercase">Coins</p>
               <p className="font-semibold">{Number(student.coins) || 0}</p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 uppercase">Login parol</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold tracking-wide">
+                  {student.password
+                    ? showPassword
+                      ? student.password
+                      : "•".repeat(Math.max(student.password.length, 6))
+                    : "—"}
+                </p>
+                {student.password && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="text-slate-400 hover:text-slate-600"
+                    aria-label={
+                      showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
