@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, GripVertical } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -12,119 +12,10 @@ import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
-  useSortable,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { useGroups } from "./GroupsContext";
-
-// "1400" -> "14:00" ko'rinishida, faqat raqamlar, soat 00-23, minut 00-59
-function formatTimeDigits(raw) {
-  const digits = raw.replace(/\D/g, "").slice(0, 4);
-
-  if (digits.length <= 2) {
-    return digits;
-  }
-
-  let hh = digits.slice(0, 2);
-  let mm = digits.slice(2, 4);
-
-  if (parseInt(hh, 10) > 23) hh = "23";
-
-  if (mm.length === 2 && parseInt(mm, 10) > 59) mm = "59";
-
-  return `${hh}:${mm}`;
-}
-
-// faqat harflar, har 2 harfdan keyin "-" avtomatik, jami 6 harf (3 ta kun)
-// har bir kun: birinchi harf katta, ikkinchisi kichik -> "Mo", "We", "Fr"
-function formatDaysLetters(raw) {
-  const letters = raw.replace(/[^a-zA-Z]/g, "").slice(0, 6);
-
-  const groups = [];
-  for (let i = 0; i < letters.length; i += 2) {
-    groups.push(letters.slice(i, i + 2));
-  }
-
-  const formatted = groups.map((g) => {
-    if (g.length === 0) return g;
-    if (g.length === 1) return g[0].toUpperCase();
-    return g[0].toUpperCase() + g[1].toLowerCase();
-  });
-
-  return formatted.join("-");
-}
-
-function SortableGroupCard({
-  group,
-  editMode,
-  selected,
-  onToggleSelect,
-  onOpen,
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: group.id, disabled: !editMode });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-  };
-
-  const Wrapper = editMode ? "div" : "button";
-
-  return (
-    <Wrapper
-      ref={setNodeRef}
-      style={style}
-      onClick={!editMode ? onOpen : undefined}
-      className="w-full text-left rounded-3xl border border-white/20 bg-white/90 backdrop-blur-sm px-6 py-5 shadow-sm flex justify-between hover:brightness-105 active:scale-[0.99] transition"
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        {editMode && (
-          <>
-            <button
-              {...attributes}
-              {...listeners}
-              onClick={(e) => e.stopPropagation()}
-              className="cursor-grab active:cursor-grabbing text-slate-600 shrink-0 touch-none"
-            >
-              <GripVertical className="w-5 h-5" />
-            </button>
-            <input
-              type="checkbox"
-              checked={selected}
-              onChange={() => onToggleSelect(group.id)}
-              className="w-5 h-5 accent-blue-600 shrink-0"
-            />
-          </>
-        )}
-
-        <div className="min-w-0">
-          <h3 className="text-xl font-bold text-slate-900 truncate">
-            {group.name}
-          </h3>
-          <p className="text-sm text-slate-600 mt-2 leading-snug">
-            Name of students
-            <br />
-            for Payment
-          </p>
-        </div>
-      </div>
-
-      <div className="text-right text-sm text-slate-600 flex flex-col gap-2 justify-start shrink-0">
-        <p>{group.time || "Lesson time"}</p>
-        <p>{group.days || "Lesson days"}</p>
-        <p>Num. of students: {group.students.length}</p>
-      </div>
-    </Wrapper>
-  );
-}
+import SortableGroupCard from "../components/SortableGroupCard";
+import { formatTimeDigits, formatDaysLetters } from "../utils/formatters";
 
 export default function Group() {
   const navigate = useNavigate();
@@ -237,7 +128,6 @@ export default function Group() {
                 className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
               />
 
-              {/* Lesson time: raqam kiritilganda avtomatik "HH:MM" (24 soatlik) */}
               <input
                 type="text"
                 inputMode="numeric"
@@ -248,7 +138,6 @@ export default function Group() {
                 className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
               />
 
-              {/* Lesson days: harflar kiritilganda avtomatik "Mo-We-Fr" formatida, jami 6 harf */}
               <input
                 type="text"
                 placeholder="Lesson days (Mo-We-Fr)"

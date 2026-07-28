@@ -66,6 +66,8 @@ export function GroupsProvider({ children }) {
             ...s,
             paymentSum: Number(s.payment_sum) || 0,
             paymentHistory: Array.isArray(history) ? history : [],
+            lessonPrice: Number(s.lesson_price) || 0,
+            coins: Number(s.coins) || 0,
           };
         }),
     }));
@@ -140,6 +142,7 @@ export function GroupsProvider({ children }) {
         position,
         payment_sum: 0,
         payment_history: [],
+        lesson_price: 0,
       })
       .select()
       .single();
@@ -160,6 +163,7 @@ export function GroupsProvider({ children }) {
                   ...data,
                   paymentSum: 0,
                   paymentHistory: [],
+                  lessonPrice: 0,
                 },
               ],
             }
@@ -208,7 +212,8 @@ export function GroupsProvider({ children }) {
     );
   };
 
-  // Yangi to'lov saqlash (students.payment_history ustuniga yozadi)
+  // Yangi to'lov saqlash: balансga qo'shiladi, tarixga yoziladi,
+  // va shu to'lov summasi 12 ga bo'linib "1 dars narxi" (lesson_price) sifatida saqlanadi.
   const addPayment = async (groupId, studentId, amount) => {
     const numAmount = Number(amount);
     if (!numAmount || numAmount <= 0) return { error: "Noto'g'ri summa" };
@@ -218,6 +223,7 @@ export function GroupsProvider({ children }) {
     if (!student) return { error: "O'quvchi topilmadi" };
 
     const newPaymentSum = (Number(student.paymentSum) || 0) + numAmount;
+    const newLessonPrice = numAmount / 12;
     const newRecord = {
       id: Date.now().toString(),
       amount: numAmount,
@@ -230,6 +236,7 @@ export function GroupsProvider({ children }) {
       .update({
         payment_sum: newPaymentSum,
         payment_history: updatedHistory,
+        lesson_price: newLessonPrice,
       })
       .eq("id", studentId);
 
@@ -249,6 +256,7 @@ export function GroupsProvider({ children }) {
                       ...s,
                       paymentSum: newPaymentSum,
                       paymentHistory: updatedHistory,
+                      lessonPrice: newLessonPrice,
                     }
                   : s,
               ),
@@ -290,6 +298,40 @@ export function GroupsProvider({ children }) {
           : g,
       ),
     );
+  };
+
+  // Homework/Classwork/Extrawork/Tartib uchun coins qo'shish yoki ayirish
+  const adjustCoins = async (groupId, studentId, delta) => {
+    const group = groups.find((g) => g.id === groupId);
+    const student = group?.students.find((s) => s.id === studentId);
+    if (!student) return { error: "O'quvchi topilmadi" };
+
+    const newCoins = (Number(student.coins) || 0) + delta;
+
+    const { error } = await supabase
+      .from("students")
+      .update({ coins: newCoins })
+      .eq("id", studentId);
+
+    if (error) {
+      console.error("Coinsni o'zgartirishda xatolik:", error);
+      return { error: error.message };
+    }
+
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              students: g.students.map((s) =>
+                s.id === studentId ? { ...s, coins: newCoins } : s,
+              ),
+            }
+          : g,
+      ),
+    );
+
+    return { error: null };
   };
 
   const deleteStudents = async (groupId, studentIds) => {
@@ -369,6 +411,7 @@ export function GroupsProvider({ children }) {
         updateStudent,
         addPayment,
         adjustPaymentSum,
+        adjustCoins,
         deleteStudents,
         reorderStudents,
         deleteGroups,

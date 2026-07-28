@@ -1,110 +1,40 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, X } from "lucide-react";
 import { useGroups } from "./GroupsContext";
 import { supabase } from "../supabaseClient";
-
-// Sistema shu oydan (iyul 2026) ochilgan, shundan oldingi sanalar mavjud emas.
-// Maksimal tanlash mumkin bo'lgan yil - 2028.
-const MIN_YEAR = 2026;
-const MIN_MONTH = 7; // Iyul
-const MAX_YEAR = 2028;
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function daysInMonth(month, year) {
-  return new Date(year, month, 0).getDate();
-}
-
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-
-function formatRealTimeDate(date) {
-  return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()}`;
-}
+import { pad2, formatRealTimeDate } from "../utils/formatters";
+import AttendanceDatePicker from "../components/AttendanceDatePicker";
+import AttendanceStudentRow from "../components/AttendanceStudentRow";
+import GradeModal from "../components/modals/GradeModal";
 
 export default function Attendance() {
   const navigate = useNavigate();
-  const { groups, loading, getGroup, adjustPaymentSum } = useGroups();
+  const { groups, loading, getGroup, adjustPaymentSum, adjustCoins } =
+    useGroups();
 
   const [selectedGroupId, setSelectedGroupId] = useState(null);
 
   const today = new Date();
   const realTimeDate = formatRealTimeDate(today);
 
-  // Davomat belgilanadigan sana (kun/oy/yil) — default: bugungi sana
   const [selectedDate, setSelectedDate] = useState({
     day: today.getDate(),
     month: today.getMonth() + 1,
     year: today.getFullYear(),
   });
 
-  const [attendance, setAttendance] = useState({});
+  const [savedStatus, setSavedStatus] = useState({});
+  const [pendingStatus, setPendingStatus] = useState({});
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [expandedStudentId, setExpandedStudentId] = useState(null);
-  // Har bir talaba uchun saqlanish holati — tez-tez bosilganda davomat/balansning
-  // ikki marta yozilib ketishining (race condition) oldini olish uchun.
-  const [savingStudentId, setSavingStudentId] = useState(null);
+  const [gradeStudent, setGradeStudent] = useState(null);
 
   const group = selectedGroupId ? getGroup(selectedGroupId) : null;
-
-  const yearOptions = useMemo(() => {
-    const arr = [];
-    for (let y = MIN_YEAR; y <= MAX_YEAR; y++) arr.push(y);
-    return arr;
-  }, []);
-
-  const monthOptions = useMemo(() => {
-    if (selectedDate.year === MIN_YEAR) {
-      const arr = [];
-      for (let m = MIN_MONTH; m <= 12; m++) arr.push(m);
-      return arr;
-    }
-    return Array.from({ length: 12 }, (_, i) => i + 1);
-  }, [selectedDate.year]);
-
-  const dayOptions = useMemo(() => {
-    const total = daysInMonth(selectedDate.month, selectedDate.year);
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }, [selectedDate.month, selectedDate.year]);
 
   const selectedISO = `${selectedDate.year}-${pad2(selectedDate.month)}-${pad2(
     selectedDate.day,
   )}`;
-
-  const handleYearChange = (value) => {
-    const year = Number(value);
-    let month = selectedDate.month;
-    if (year === MIN_YEAR && month < MIN_MONTH) month = MIN_MONTH;
-    const maxDay = daysInMonth(month, year);
-    const day = Math.min(selectedDate.day, maxDay);
-    setSelectedDate({ day, month, year });
-  };
-
-  const handleMonthChange = (value) => {
-    const month = Number(value);
-    const maxDay = daysInMonth(month, selectedDate.year);
-    const day = Math.min(selectedDate.day, maxDay);
-    setSelectedDate({ ...selectedDate, month, day });
-  };
-
-  const handleDayChange = (value) => {
-    setSelectedDate({ ...selectedDate, day: Number(value) });
-  };
 
   const fetchAttendance = useCallback(async (groupId, dateISO) => {
     setAttendanceLoading(true);
@@ -126,7 +56,8 @@ export default function Attendance() {
       map[row.student_id] = row.status;
     });
 
-    setAttendance(map);
+    setSavedStatus(map);
+    setPendingStatus({});
     setAttendanceLoading(false);
   }, []);
 
@@ -135,52 +66,65 @@ export default function Attendance() {
       fetchAttendance(selectedGroupId, selectedISO);
       setExpandedStudentId(null);
     } else {
-      setAttendance({});
+      setSavedStatus({});
+      setPendingStatus({});
     }
   }, [selectedGroupId, selectedISO, fetchAttendance]);
 
-  const markAttendance = async (studentId, status) => {
-    // Bir xil talaba uchun oldingi so'rov hali tugamagan bo'lsa, kutamiz —
-    // aks holda balans ikki marta o'zgarib ketishi mumkin edi.
-    if (savingStudentId === studentId) return;
+  const toggleExpand = (studentId) => {
+    setExpandedStudentId((prev) => (prev === studentId ? null : studentId));
+  };
 
-    const prevStatus = attendance[studentId];
-    setSavingStudentId(studentId);
-    setAttendance((prev) => ({ ...prev, [studentId]: status }));
+  const chooseStatus = (studentId, status) => {
+    setPendingStatus((prev) => ({ ...prev, [studentId]: status }));
     setExpandedStudentId(null);
+  };
 
-    const { error } = await supabase.from("attendance").upsert(
-      {
-        student_id: studentId,
-        group_id: selectedGroupId,
-        date: selectedISO,
-        status,
-      },
-      { onConflict: "student_id,date" },
-    );
+  const hasPendingChanges = Object.keys(pendingStatus).length > 0;
 
-    if (error) {
-      console.error("Davomatni saqlashda xatolik:", error);
-      // Saqlanmasa, oldingi holatga qaytaramiz
-      setAttendance((prev) => ({ ...prev, [studentId]: prevStatus }));
-      setSavingStudentId(null);
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!hasPendingChanges || submitting) return;
+    setSubmitting(true);
 
-    // Balansni davomatga qarab o'zgartirish
-    const student = group?.students.find((s) => s.id === studentId);
-    const lessonPrice = Number(student?.lessonPrice) || 0;
+    const entries = Object.entries(pendingStatus);
 
-    if (lessonPrice > 0) {
-      if (status === "present" && prevStatus !== "present") {
-        await adjustPaymentSum(selectedGroupId, studentId, -lessonPrice);
-      } else if (prevStatus === "present" && status !== "present") {
-        await adjustPaymentSum(selectedGroupId, studentId, lessonPrice);
+    for (const [studentId, status] of entries) {
+      const prevStatus = savedStatus[studentId];
+
+      const { error } = await supabase.from("attendance").upsert(
+        {
+          student_id: studentId,
+          group_id: selectedGroupId,
+          date: selectedISO,
+          status,
+        },
+        { onConflict: "student_id,date" },
+      );
+
+      if (error) {
+        console.error("Davomatni saqlashda xatolik:", error);
+        continue;
+      }
+
+      const student = group?.students.find((s) => s.id === studentId);
+      const lessonPrice = Number(student?.lessonPrice) || 0;
+
+      if (lessonPrice > 0) {
+        if (status === "present" && prevStatus !== "present") {
+          await adjustPaymentSum(selectedGroupId, studentId, -lessonPrice);
+        } else if (prevStatus === "present" && status !== "present") {
+          await adjustPaymentSum(selectedGroupId, studentId, lessonPrice);
+        }
       }
     }
 
-    setSavingStudentId(null);
+    setSavedStatus((prev) => ({ ...prev, ...pendingStatus }));
+    setPendingStatus({});
+    setSubmitting(false);
   };
+
+  const handleSaveGrade = (delta) =>
+    adjustCoins(selectedGroupId, gradeStudent.id, delta);
 
   return (
     <div className="min-h-screen w-full flex justify-center bg-[#00173d]">
@@ -212,7 +156,7 @@ export default function Attendance() {
           </span>
         </div>
 
-        {/* ---------- GURUHLAR RO'YXATI ---------- */}
+        {/* GURUHLAR RO'YXATI */}
         {!selectedGroupId && (
           <>
             {loading && (
@@ -254,7 +198,7 @@ export default function Attendance() {
           </>
         )}
 
-        {/* ---------- GURUH ICHIDAGI DAVOMAT ---------- */}
+        {/* GURUH ICHIDAGI DAVOMAT */}
         {selectedGroupId && !group && (
           <div className="w-full mt-16 rounded-3xl bg-white/90 backdrop-blur-sm shadow-sm px-6 py-10">
             <p className="text-slate-600 text-lg font-semibold text-center">
@@ -269,44 +213,10 @@ export default function Attendance() {
               {group.name}
             </h2>
 
-            {/* Sana tanlash: kun / oy / yil */}
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <select
-                value={selectedDate.day}
-                onChange={(e) => handleDayChange(e.target.value)}
-                className="rounded-full bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 outline-none cursor-pointer"
-              >
-                {dayOptions.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedDate.month}
-                onChange={(e) => handleMonthChange(e.target.value)}
-                className="rounded-full bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 outline-none cursor-pointer"
-              >
-                {monthOptions.map((m) => (
-                  <option key={m} value={m}>
-                    {MONTH_NAMES[m - 1]}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedDate.year}
-                onChange={(e) => handleYearChange(e.target.value)}
-                className="rounded-full bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 outline-none cursor-pointer"
-              >
-                {yearOptions.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AttendanceDatePicker
+              selectedDate={selectedDate}
+              onChange={setSelectedDate}
+            />
 
             {attendanceLoading && (
               <p className="text-slate-500 text-center py-4">Yuklanmoqda...</p>
@@ -319,63 +229,28 @@ export default function Attendance() {
             )}
 
             {!attendanceLoading &&
-              group.students.map((student) => {
-                const status = attendance[student.id];
-                const isExpanded = expandedStudentId === student.id;
-                const isSaving = savingStudentId === student.id;
+              group.students.map((student) => (
+                <AttendanceStudentRow
+                  key={student.id}
+                  student={student}
+                  pending={pendingStatus[student.id]}
+                  saved={savedStatus[student.id]}
+                  isExpanded={expandedStudentId === student.id}
+                  onToggleExpand={toggleExpand}
+                  onChooseStatus={chooseStatus}
+                  onOpenGradeModal={setGradeStudent}
+                />
+              ))}
 
-                return (
-                  <div
-                    key={student.id}
-                    className="rounded-2xl border border-slate-800 bg-slate-100/80 px-4 py-3"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-semibold text-slate-900 truncate uppercase">
-                        {student.name} {student.surname}
-                      </span>
-
-                      <button
-                        onClick={() =>
-                          setExpandedStudentId(isExpanded ? null : student.id)
-                        }
-                        disabled={isSaving}
-                        aria-label="Davomatni belgilash"
-                        className={`w-7 h-7 rounded-full border-2 shrink-0 transition disabled:opacity-60 ${
-                          status === "present"
-                            ? "bg-green-500 border-green-500"
-                            : status === "absent"
-                              ? "bg-red-500 border-red-500"
-                              : "bg-slate-200 border-slate-300 hover:border-slate-400"
-                        }`}
-                      />
-                    </div>
-
-                    {isExpanded && (
-                      <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-300/70">
-                        <button
-                          onClick={() => markAttendance(student.id, "present")}
-                          disabled={isSaving}
-                          aria-label="Keldi"
-                          className="w-9 h-9 rounded-full bg-green-500 hover:bg-green-600 disabled:opacity-60 flex items-center justify-center transition"
-                        >
-                          <Check
-                            className="w-5 h-5 text-white"
-                            strokeWidth={3}
-                          />
-                        </button>
-                        <button
-                          onClick={() => markAttendance(student.id, "absent")}
-                          disabled={isSaving}
-                          aria-label="Kelmadi"
-                          className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 disabled:opacity-60 flex items-center justify-center transition"
-                        >
-                          <X className="w-5 h-5 text-white" strokeWidth={3} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            {!attendanceLoading && group.students.length > 0 && (
+              <button
+                onClick={handleSubmit}
+                disabled={!hasPendingChanges || submitting}
+                className="w-full mt-2 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 shadow-md transition"
+              >
+                {submitting ? "Saqlanmoqda..." : "Submit"}
+              </button>
+            )}
           </div>
         )}
 
@@ -385,6 +260,14 @@ export default function Attendance() {
           by Qo&apos;ldoshev Alibek
         </p>
       </div>
+
+      {gradeStudent && (
+        <GradeModal
+          student={gradeStudent}
+          onClose={() => setGradeStudent(null)}
+          onSave={handleSaveGrade}
+        />
+      )}
     </div>
   );
 }
