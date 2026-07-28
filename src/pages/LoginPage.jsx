@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudentAuth } from "../context/StudentAuthContext";
 import Icon2 from "../img/icon2.png";
+import { Wrench, Clock3, AlertTriangle } from "lucide-react";
 
 const TEACHER_USERNAME = "Viloyat";
 const TEACHER_PASSWORD = "2202";
@@ -39,6 +40,44 @@ export default function LoginPage() {
   };
 
   return (
+    // <div className="min-h-screen w-full bg-[#090d16] text-slate-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    //   {/* Orqa fondagi zamonaviy neonsimon yog'du */}
+    //   <div className="absolute top-1/4 -left-20 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+    //   <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+    //   {/* Asosiy xabar kartochkasi */}
+    //   <div className="relative z-10 w-full max-w-md p-8 rounded-3xl bg-slate-900/80 border border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col items-center text-center">
+        
+    //     {/* Vizual Ikonka */}
+    //     <div className="relative mb-8">
+    //       <div className="p-5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 relative z-10">
+    //         <Wrench className="w-12 h-12 animate-pulse" strokeWidth={1.5} />
+    //       </div>
+    //       <div className="absolute inset-0 bg-amber-500/20 rounded-full blur-xl scale-150 opacity-60" />
+    //       <AlertTriangle className="w-6 h-6 text-rose-500 absolute -top-2 -right-2 z-20 bg-[#090d16] rounded-full p-0.5" />
+    //     </div>
+
+    //     <h1 className="text-2xl font-bold text-white mb-4 tracking-tight drop-shadow-sm">
+    //       Texnik ishlar
+    //     </h1>
+
+    //     <p className="text-base text-slate-300 leading-relaxed mb-8 font-medium">
+    //       Hozirda saytda tuzatishlar olib borilmoqda birozdan keyin urinib ko'ring
+    //     </p>
+
+    //     <div className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-800/60 border border-white/5 backdrop-blur-md text-slate-400 text-sm">
+    //       <Clock3 className="w-5 h-5 text-blue-400" />
+    //       <span className="flex-1 text-left">Noxushlik uchun uzr so'raymiz, tez orada qaytamiz.</span>
+    //     </div>
+    //   </div>
+
+    //   <p className="absolute bottom-6 text-center text-xs text-slate-600 tracking-widest uppercase z-10">
+    //     System Status: Under Maintenance
+    //   </p>
+    // </div>
+
+
+
     <div className="relative min-h-screen w-full flex justify-center items-center bg-[#00173d] overflow-hidden">
       {/* Orqa fondagi iOS Liquid Glass doiralari (Glow effect) */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/30 rounded-full blur-[120px] pointer-events-none" />
