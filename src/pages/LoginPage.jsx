@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStudentAuth } from "../context/StudentAuthContext";
+import Icon2 from "../img/icon2.png";
 
 const TEACHER_USERNAME = "Viloyat";
 const TEACHER_PASSWORD = "2202";
@@ -38,53 +39,60 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex justify-center bg-[#00173d]">
-      <div className="w-full max-w-md flex flex-col items-center px-6 pt-16 pb-10">
-        {/* Welcome card */}
-        <div className="w-full rounded-3xl border-2 border-blue-400 bg-white/90 backdrop-blur-sm px-6 py-8 text-center shadow-sm">
-          <h1 className="text-4xl font-semibold tracking-wide text-slate-500">
-            WELCOME
-          </h1>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            &quot;T&quot; App
-          </p>
+    <div className="relative min-h-screen w-full flex justify-center items-center bg-[#00173d] overflow-hidden">
+      {/* Orqa fondagi iOS Liquid Glass doiralari (Glow effect) */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-500/30 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-indigo-500/25 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center px-6 py-8 min-h-screen justify-between">
+        {/* Welcome logo */}
+        <div className="w-full flex justify-center pt-4">
+          <img src={Icon2} className="w-28 drop-shadow-lg" alt="Logo" />
         </div>
 
-        {/* Login card */}
-        <div className="w-full mt-16 rounded-3xl bg-white/95 backdrop-blur-md shadow-lg px-6 py-8">
-          <h2 className="text-3xl font-bold text-center text-slate-900 mb-8">
+        {/* Login Glass Card */}
+        <div className="w-full my-auto rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] p-8">
+          <h2 className="text-3xl font-bold text-white text-center mb-6 drop-shadow-sm">
             Login
           </h2>
 
-          <div className="flex flex-col gap-5">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="off"
-              className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
-            />
+          <div className="flex flex-col gap-4">
+            {/* Username Input */}
+            <div>
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="off"
+                className="w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-md px-5 py-3.5 text-white placeholder-white/50 outline-none shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 focus:bg-white/20 focus:border-white/60 focus:ring-2 focus:ring-white/30"
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleNext()}
-              className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
-            />
+            {/* Password Input */}
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleNext()}
+                className="w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-md px-5 py-3.5 text-white placeholder-white/50 outline-none shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 focus:bg-white/20 focus:border-white/60 focus:ring-2 focus:ring-white/30"
+              />
+            </div>
 
+            {/* Error message */}
             {error && (
-              <p className="text-red-600 text-sm font-semibold text-center -mt-2">
+              <p className="text-red-400 text-sm font-semibold text-center mt-1">
                 {error}
               </p>
             )}
 
+            {/* Next Button */}
             <button
               onClick={handleNext}
               disabled={submitting}
-              className="w-full mt-3 rounded-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 text-white text-xl font-bold py-4 shadow-md transition"
+              className="w-full mt-3 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] disabled:opacity-50 text-white text-lg font-semibold py-3.5 shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-all duration-200 border border-white/20"
             >
               {submitting ? "Tekshirilmoqda..." : "Next"}
             </button>
@@ -92,7 +100,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="mt-auto pt-16 text-center text-sm text-slate-400/80">
+        <p className="pb-4 text-center text-xs text-white/50">
           Copyright © 2026
           <br />
           by Qo&apos;ldoshev Alibek

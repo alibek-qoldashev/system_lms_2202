@@ -84,11 +84,14 @@ export default function GroupDetail() {
 
   if (!group) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4 bg-[#00173d] px-6">
-        <p className="text-slate-200 text-lg font-semibold">Guruh topilmadi</p>
+      <div className="relative min-h-screen w-full flex flex-col items-center justify-center gap-4 bg-[#00173d] px-6 overflow-hidden">
+        <div className="absolute -top-10 -left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px] pointer-events-none" />
+        <p className="text-white/80 text-lg font-medium drop-shadow-sm">
+          Guruh topilmadi
+        </p>
         <button
           onClick={() => navigate("/groups")}
-          className="rounded-full bg-blue-500 text-white px-6 py-3 font-bold"
+          className="rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 border border-white/20 text-white px-6 py-3 font-semibold shadow-lg hover:from-blue-600 hover:to-blue-700 transition active:scale-95"
         >
           Groups ga qaytish
         </button>
@@ -192,59 +195,67 @@ export default function GroupDetail() {
   };
 
   return (
-    <div className="min-h-screen w-full flex justify-center bg-[#00173d]">
-      <div className="w-full max-w-md flex flex-col items-center px-6 pt-14 pb-10">
-        <button
-          onClick={() => navigate("/groups")}
-          className="self-start text-slate-200 font-semibold mb-4"
-        >
-          ← Groups
-        </button>
+    <div className="relative min-h-screen w-full flex justify-center bg-[#00173d] overflow-hidden">
+      {/* Orqa fondagi Liquid Glass Glow doiralari */}
+      <div className="absolute -top-10 -right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 -left-20 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="bg-white p-5 rounded-[40px] w-full flex items-center justify-center relative">
-          <h1 className="text-xl font-bold  text-center px-8">
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center px-6 pt-12 pb-10 min-h-screen">
+        {/* Header Back Button */}
+        <div className="w-full flex items-center justify-between mb-6">
+          <button
+            onClick={() =>
+              formOpen ? setFormOpen(false) : navigate("/groups")
+            }
+            className="text-white/80 hover:text-white font-medium transition flex items-center gap-1"
+          >
+            ← {formOpen ? "Group" : "Groups"}
+          </button>
+        </div>
+
+        {/* Group Name Banner */}
+        <div className="w-full bg-white/10 backdrop-blur-2xl border border-white/20 p-4 rounded-3xl flex items-center justify-between relative shadow-[0_8px_32px_0_rgba(0,0,0,0.2)]">
+          <h1 className="text-xl font-bold text-white text-center w-full px-8 drop-shadow-sm truncate">
             {group.name}
           </h1>
           <button
             onClick={openGroupEdit}
-            className="absolute right-5 text-black"
+            className="absolute right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 border border-white/10 p-2 rounded-2xl transition backdrop-blur-md active:scale-95"
             aria-label="Edit group"
           >
-            <Pencil className="w-5 h-5" />
+            <Pencil className="w-4 h-4" />
           </button>
         </div>
 
         {/* Empty state */}
         {!formOpen && group.students.length === 0 && (
-          <>
-            <h2 className="text-4xl font-semibold text-slate-300 text-center mt-10">
+          <div className="my-auto w-full flex flex-col items-center">
+            <h2 className="text-4xl font-semibold text-white/70 text-center mb-10 drop-shadow-sm leading-tight">
               Ooops
               <br />
               No Students
             </h2>
 
-            <div className="w-full mt-10 rounded-3xl bg-white/90 backdrop-blur-sm shadow-sm px-6 py-6">
-              <button
-                onClick={() => setFormOpen(true)}
-                className="w-full rounded-full border border-slate-800 py-4 flex items-center justify-center gap-2 hover:bg-slate-100 transition"
-              >
-                <Plus className="w-5 h-5" strokeWidth={3} />
-                <span className="text-lg font-bold text-slate-900">
-                  Add a student
-                </span>
-              </button>
-            </div>
-          </>
+            <button
+              onClick={() => setFormOpen(true)}
+              className="w-full rounded-2xl border border-white/20 bg-white/10 backdrop-blur-2xl py-4 shadow-[0_8px_25px_rgba(0,0,0,0.2)] hover:bg-white/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+              <span className="text-lg font-semibold text-white">
+                Add a student
+              </span>
+            </button>
+          </div>
         )}
 
-        {/* Student form */}
+        {/* Student creation form */}
         {formOpen && (
-          <div className="w-full mt-10 rounded-3xl bg-white/95 backdrop-blur-md shadow-lg px-6 py-8">
-            <h2 className="text-2xl font-bold text-center text-slate-900 mb-8">
+          <div className="w-full my-auto rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] p-6">
+            <h2 className="text-2xl font-bold text-center text-white mb-6 drop-shadow-sm">
               Adding student
             </h2>
 
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               <input
                 type="text"
                 placeholder="Student name"
@@ -255,7 +266,7 @@ export default function GroupDetail() {
                     name: formatSingleWordName(e.target.value),
                   })
                 }
-                className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
+                className="w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-xl px-5 py-3.5 text-white placeholder-white/50 outline-none shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 focus:bg-white/20 focus:border-white/60 focus:ring-2 focus:ring-white/30"
               />
               <input
                 type="text"
@@ -267,7 +278,7 @@ export default function GroupDetail() {
                     surname: formatSingleWordName(e.target.value),
                   })
                 }
-                className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
+                className="w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-xl px-5 py-3.5 text-white placeholder-white/50 outline-none shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 focus:bg-white/20 focus:border-white/60 focus:ring-2 focus:ring-white/30"
               />
               <input
                 type="text"
@@ -278,10 +289,11 @@ export default function GroupDetail() {
                   setForm({ ...form, age: formatAge(e.target.value) })
                 }
                 maxLength={2}
-                className="w-full rounded-full border border-slate-800 bg-transparent px-6 py-4 text-slate-800 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 transition"
+                className="w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-xl px-5 py-3.5 text-white placeholder-white/50 outline-none shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 focus:bg-white/20 focus:border-white/60 focus:ring-2 focus:ring-white/30"
               />
-              <div className="w-full flex items-center rounded-full border border-slate-800 bg-transparent px-6 py-4 gap-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-300 transition">
-                <span className="text-slate-500 font-semibold shrink-0">
+
+              <div className="w-full flex items-center rounded-2xl border border-white/30 bg-white/10 backdrop-blur-xl px-5 py-3.5 gap-2 shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)] focus-within:bg-white/20 focus-within:border-white/60 focus-within:ring-2 focus-within:ring-white/30 transition-all duration-300">
+                <span className="text-white/60 font-semibold text-sm shrink-0">
                   +998
                 </span>
                 <input
@@ -296,13 +308,13 @@ export default function GroupDetail() {
                     })
                   }
                   maxLength={9}
-                  className="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-500"
+                  className="flex-1 bg-transparent outline-none text-white placeholder-white/50 text-sm"
                 />
               </div>
 
               <button
                 onClick={handleAddStudent}
-                className="w-full mt-3 rounded-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-xl font-bold py-4 shadow-md transition"
+                className="w-full mt-2 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] text-white text-lg font-semibold py-3.5 shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-all duration-200 border border-white/20"
               >
                 Add
               </button>
@@ -312,7 +324,7 @@ export default function GroupDetail() {
 
         {/* Students list */}
         {!formOpen && group.students.length > 0 && (
-          <div className="w-full mt-10 rounded-3xl bg-white/90 backdrop-blur-sm shadow-sm px-6 py-6 flex flex-col gap-4">
+          <div className="w-full mt-6 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] p-5 flex flex-col gap-4">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -343,20 +355,20 @@ export default function GroupDetail() {
             {!editMode && (
               <button
                 onClick={() => setFormOpen(true)}
-                className="w-full rounded-full border border-slate-800 py-4 flex items-center justify-center gap-2 hover:bg-slate-100 transition"
+                className="w-full mt-2 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-2xl py-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:bg-white/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
               >
-                <Plus className="w-5 h-5" strokeWidth={3} />
-                <span className="text-lg font-bold text-slate-900">
+                <Plus className="w-5 h-5 text-white" strokeWidth={2.5} />
+                <span className="text-base font-semibold text-white">
                   Add a student
                 </span>
               </button>
             )}
 
-            <div className="flex justify-end gap-3 mt-2">
+            <div className="flex justify-end gap-3 mt-1">
               {editMode && selectedIds.length > 0 && (
                 <button
                   onClick={handleDeleteSelected}
-                  className="rounded-full bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 shadow-md transition"
+                  className="rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 active:scale-95 text-white font-semibold px-5 py-2.5 shadow-[0_4px_15px_rgba(225,29,72,0.4)] transition text-sm border border-white/20"
                 >
                   Delete ({selectedIds.length})
                 </button>
@@ -366,7 +378,7 @@ export default function GroupDetail() {
                   setEditMode((v) => !v);
                   setSelectedIds([]);
                 }}
-                className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-bold px-8 py-3 shadow-md transition"
+                className="rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 active:scale-95 text-white font-medium px-6 py-2.5 transition shadow-sm text-sm"
               >
                 {editMode ? "Done" : "Edit"}
               </button>
@@ -374,6 +386,7 @@ export default function GroupDetail() {
           </div>
         )}
 
+        {/* Modals */}
         <GroupEditModal
           open={groupEditOpen}
           onClose={() => setGroupEditOpen(false)}
@@ -406,7 +419,8 @@ export default function GroupDetail() {
           onClose={() => setCoinHistoryStudent(null)}
         />
 
-        <p className="mt-auto pt-16 text-center text-sm text-slate-400/80">
+        {/* Footer */}
+        <p className="mt-auto pt-16 text-center text-xs text-white/50">
           Copyright © 2026
           <br />
           by Qo&apos;ldoshev Alibek

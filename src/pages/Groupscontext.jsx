@@ -7,32 +7,38 @@ import React, {
 } from "react";
 import { supabase } from "../supabaseClient";
 
-function lastDigits(phone, n = 4) {
+// ==========================================
+// 1. HELPERS (Yordamchi funksiyalar)
+// ==========================================
+
+const lastDigits = (phone, n = 4) => {
   const digitsOnly = (phone || "").replace(/\D/g, "");
   return digitsOnly.slice(-n) || "0000";
-}
+};
 
-// "" / undefined / null bo'lsa null qaytaradi, aks holda Number() ga o'giradi.
-// Muhim: 0 qiymatini ham to'g'ri saqlaydi ("value ? Number(value) : null" 0 ni yo'qotardi).
-function toNumberOrNull(value) {
+const toNumberOrNull = (value) => {
   if (value === "" || value === undefined || value === null) return null;
   return Number(value);
-}
+};
 
-const GroupsContext = createContext(null);
+const pad2 = (n) => String(n).padStart(2, "0");
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-function todayISO() {
+const todayISO = () => {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
+};
+
+// ==========================================
+// 2. CONTEXT & PROVIDER
+// ==========================================
+
+const GroupsContext = createContext(null);
 
 export function GroupsProvider({ children }) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // --- GET DATA ---
   const fetchGroups = useCallback(async () => {
     setLoading(true);
 
@@ -92,6 +98,7 @@ export function GroupsProvider({ children }) {
     fetchGroups();
   }, [fetchGroups]);
 
+  // --- GROUP ACTIONS ---
   const addGroup = async (group) => {
     const { data, error } = await supabase
       .from("groups")
@@ -139,6 +146,33 @@ export function GroupsProvider({ children }) {
     );
   };
 
+  const deleteGroups = async (groupIds) => {
+    const { error } = await supabase.from("groups").delete().in("id", groupIds);
+    if (error) {
+      console.error("Guruhlarni o'chirishda xatolik:", error);
+      return;
+    }
+    setGroups((prev) => prev.filter((g) => !groupIds.includes(g.id)));
+  };
+
+  const reorderGroups = async (newGroups) => {
+    const prevGroups = groups;
+    setGroups(newGroups);
+
+    const results = await Promise.all(
+      newGroups.map((g, index) =>
+        supabase.from("groups").update({ position: index }).eq("id", g.id),
+      ),
+    );
+
+    const failed = results.find((r) => r.error);
+    if (failed) {
+      console.error("Guruhlar tartibini saqlashda xatolik:", failed.error);
+      setGroups(prevGroups); // Revert on failure
+    }
+  };
+
+  // --- STUDENT ACTIONS ---
   const addStudent = async (groupId, student) => {
     const group = groups.find((g) => g.id === groupId);
     const position = group ? group.students.length : 0;
@@ -190,11 +224,8 @@ export function GroupsProvider({ children }) {
   const updateStudent = async (groupId, studentId, updates) => {
     const group = groups.find((g) => g.id === groupId);
     const existingStudent = group?.students.find((s) => s.id === studentId);
-
     const age = toNumberOrNull(updates.age);
-    // Agar paymentSum berilmagan bo'lsa, mavjud qiymatni saqlaymiz —
-    // avval bu holatda bazaga 0 yozib yuborilardi, local state esa eskisini
-    // ko'rsatardi, sahifa yangilanganda balans kutilmaganda 0 ga tushib qolardi.
+
     const paymentSum =
       updates.paymentSum === undefined ||
       updates.paymentSum === null ||
@@ -243,8 +274,6 @@ export function GroupsProvider({ children }) {
     return { error: null };
   };
 
-  // Talaba (yoki admin) login parolini o'zgartirish uchun.
-  // StudentSettings.jsx shu funksiyani chaqiradi.
   const updateStudentPassword = async (studentId, newPassword) => {
     if (!newPassword || !newPassword.trim()) {
       return { error: "Parol bo'sh bo'lishi mumkin emas" };
@@ -272,8 +301,49 @@ export function GroupsProvider({ children }) {
     return { error: null };
   };
 
-  // Yangi to'lov saqlash: balansga qo'shiladi, tarixga yoziladi,
-  // va shu to'lov summasi 12 ga bo'linib "1 dars narxi" (lesson_price) sifatida saqlanadi.
+  const deleteStudents = async (groupId, studentIds) => {
+    const { error } = await supabase
+      .from("students")
+      .delete()
+      .in("id", studentIds);
+
+    if (error) {
+      console.error("Talabalarni o'chirishda xatolik:", error);
+      return;
+    }
+
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              students: g.students.filter((s) => !studentIds.includes(s.id)),
+            }
+          : g,
+      ),
+    );
+  };
+
+  const reorderStudents = async (groupId, newStudents) => {
+    const prevGroups = groups;
+    setGroups((prev) =>
+      prev.map((g) => (g.id === groupId ? { ...g, students: newStudents } : g)),
+    );
+
+    const results = await Promise.all(
+      newStudents.map((s, index) =>
+        supabase.from("students").update({ position: index }).eq("id", s.id),
+      ),
+    );
+
+    const failed = results.find((r) => r.error);
+    if (failed) {
+      console.error("Tartibni saqlashda xatolik:", failed.error);
+      setGroups(prevGroups); // Revert on failure
+    }
+  };
+
+  // --- FINANCIAL & COIN ACTIONS ---
   const addPayment = async (groupId, studentId, amount) => {
     const numAmount = Number(amount);
     if (!numAmount || numAmount <= 0) return { error: "Noto'g'ri summa" };
@@ -328,7 +398,6 @@ export function GroupsProvider({ children }) {
     return { error: null };
   };
 
-  // Davomatda balansni kamaytirish/oshirish uchun
   const adjustPaymentSum = async (groupId, studentId, delta) => {
     const group = groups.find((g) => g.id === groupId);
     const student = group?.students.find((s) => s.id === studentId);
@@ -360,7 +429,6 @@ export function GroupsProvider({ children }) {
     );
   };
 
-  // Homework/Classwork/Extrawork/Tartib uchun coins qo'shish yoki ayirish
   const adjustCoins = async (groupId, studentId, delta) => {
     const group = groups.find((g) => g.id === groupId);
     const student = group?.students.find((s) => s.id === studentId);
@@ -394,77 +462,7 @@ export function GroupsProvider({ children }) {
     return { error: null };
   };
 
-  const deleteStudents = async (groupId, studentIds) => {
-    const { error } = await supabase
-      .from("students")
-      .delete()
-      .in("id", studentIds);
-
-    if (error) {
-      console.error("Talabalarni o'chirishda xatolik:", error);
-      return;
-    }
-
-    setGroups((prev) =>
-      prev.map((g) =>
-        g.id === groupId
-          ? {
-              ...g,
-              students: g.students.filter((s) => !studentIds.includes(s.id)),
-            }
-          : g,
-      ),
-    );
-  };
-
-  const reorderStudents = async (groupId, newStudents) => {
-    const prevGroups = groups;
-    setGroups((prev) =>
-      prev.map((g) => (g.id === groupId ? { ...g, students: newStudents } : g)),
-    );
-
-    const results = await Promise.all(
-      newStudents.map((s, index) =>
-        supabase.from("students").update({ position: index }).eq("id", s.id),
-      ),
-    );
-
-    const failed = results.find((r) => r.error);
-    if (failed) {
-      console.error("Tartibni saqlashda xatolik:", failed.error);
-      // Saqlash muvaffaqiyatsiz bo'lsa, oldingi holatga qaytaramiz
-      setGroups(prevGroups);
-    }
-  };
-
-  const deleteGroups = async (groupIds) => {
-    const { error } = await supabase.from("groups").delete().in("id", groupIds);
-
-    if (error) {
-      console.error("Guruhlarni o'chirishda xatolik:", error);
-      return;
-    }
-
-    setGroups((prev) => prev.filter((g) => !groupIds.includes(g.id)));
-  };
-
-  const reorderGroups = async (newGroups) => {
-    const prevGroups = groups;
-    setGroups(newGroups);
-
-    const results = await Promise.all(
-      newGroups.map((g, index) =>
-        supabase.from("groups").update({ position: index }).eq("id", g.id),
-      ),
-    );
-
-    const failed = results.find((r) => r.error);
-    if (failed) {
-      console.error("Guruhlar tartibini saqlashda xatolik:", failed.error);
-      setGroups(prevGroups);
-    }
-  };
-
+  // --- UTILS ---
   const getGroup = (groupId) =>
     groups.find((g) => String(g.id) === String(groupId));
 
@@ -493,6 +491,10 @@ export function GroupsProvider({ children }) {
     </GroupsContext.Provider>
   );
 }
+
+// ==========================================
+// 3. CUSTOM HOOK
+// ==========================================
 
 export function useGroups() {
   const ctx = useContext(GroupsContext);

@@ -102,17 +102,21 @@ export default function Payment() {
   }, [currentStudentData]);
 
   return (
-    <div className="min-h-screen w-full flex justify-center bg-[#00173d]">
-      <div className="w-full max-w-md flex flex-col items-center px-6 pt-12 pb-10">
+    <div className="relative min-h-screen w-full flex justify-center bg-[#00173d] overflow-hidden">
+      {/* Orqa fondagi Liquid Glass doiralari (Glow effect) */}
+      <div className="absolute -top-10 -right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 -left-20 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center px-6 pt-12 pb-10 min-h-screen">
         {/* Header */}
         <div className="w-full flex items-center justify-between mb-8">
           <button
             onClick={() => navigate("/")}
-            className="text-white font-semibold flex items-center gap-1 hover:opacity-80 transition"
+            className="text-white/80 hover:text-white font-medium flex items-center gap-1 transition"
           >
             ← Home
           </button>
-          <h1 className="text-2xl font-bold text-white text-center flex-1">
+          <h1 className="text-2xl font-bold text-white text-center flex-1 drop-shadow-sm">
             Payment
           </h1>
           <span className="w-14" />
@@ -125,27 +129,29 @@ export default function Payment() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search..."
-            className="w-full rounded-full bg-white px-5 py-3 pr-12 text-slate-800 placeholder-slate-400 outline-none shadow-sm"
+            className="w-full rounded-2xl border border-white/30 bg-white/10 backdrop-blur-xl px-5 py-3.5 pr-12 text-white placeholder-white/50 outline-none shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)] transition-all duration-300 focus:bg-white/20 focus:border-white/60 focus:ring-2 focus:ring-white/30"
           />
-          <Search className="w-5 h-5 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-5 h-5 text-white/60 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
         {/* Content list */}
         {loading && (
-          <p className="text-slate-300 mt-8 text-center">Yuklanmoqda...</p>
+          <p className="text-white/60 mt-8 text-center animate-pulse">
+            Yuklanmoqda...
+          </p>
         )}
 
         {!loading && term && filteredStudents.length === 0 && (
-          <div className="w-full rounded-3xl bg-white shadow-sm px-6 py-12">
-            <p className="text-red-500 text-xl font-bold text-center">
+          <div className="w-full rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] px-6 py-12">
+            <p className="text-rose-400 text-xl font-bold text-center">
               Student not found
             </p>
           </div>
         )}
 
         {!loading && !term && filteredStudents.length === 0 && (
-          <div className="w-full rounded-3xl bg-white shadow-sm px-6 py-12">
-            <p className="text-slate-600 text-xl font-bold text-center">
+          <div className="w-full rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] px-6 py-12">
+            <p className="text-white/70 text-xl font-bold text-center">
               no money today
             </p>
           </div>
@@ -155,27 +161,26 @@ export default function Payment() {
           <div className="w-full flex flex-col gap-3">
             {filteredStudents.map((s) => {
               const balance = Number(s.paymentSum) || 0;
-              let bgClass = "bg-[#85ff8f]"; // Yashil
-              let textClass = "text-slate-900";
+              let badgeStyle =
+                "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"; // Yashil
 
               if (balance < 0) {
-                bgClass = "bg-[#ffbaba]"; // Qizil/Pushti
-                textClass = "text-red-700";
+                badgeStyle = "bg-rose-500/20 border-rose-400/30 text-rose-300"; // Qizil
               } else if (balance === 0) {
-                bgClass = "bg-[#fff29d]"; // Sariq
-                textClass = "text-slate-900";
+                badgeStyle =
+                  "bg-amber-500/20 border-amber-400/30 text-amber-300"; // Sariq
               }
 
               return (
                 <button
                   key={s.id}
                   onClick={() => openStudent(s)}
-                  className={`w-full text-left rounded-full px-6 py-4 flex items-center justify-between gap-3 shadow-sm hover:opacity-90 transition ${bgClass}`}
+                  className={`w-full text-left rounded-2xl border px-5 py-4 flex items-center justify-between gap-3 backdrop-blur-xl shadow-md transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] ${badgeStyle}`}
                 >
-                  <span className="font-semibold text-slate-900 truncate">
+                  <span className="font-semibold text-white truncate drop-shadow-sm">
                     {s.name} {s.surname}
                   </span>
-                  <span className={`font-bold shrink-0 ${textClass}`}>
+                  <span className="font-bold shrink-0 drop-shadow-sm">
                     {balance > 0 ? "+" : ""}
                     {formatSum(balance)} so'm
                   </span>
@@ -185,7 +190,8 @@ export default function Payment() {
           </div>
         )}
 
-        <p className="mt-auto pt-16 text-center text-xs text-slate-400/80">
+        {/* Footer */}
+        <p className="mt-auto pt-16 text-center text-xs text-white/50">
           Copyright © 2026
           <br />
           by Qo&apos;ldoshev Alibek
@@ -194,58 +200,58 @@ export default function Payment() {
 
       {/* Payment Modal */}
       {currentStudentData && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center px-6 z-50">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 relative shadow-xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center px-6 z-50">
+          <div className="w-full max-w-sm bg-[#0b1b36]/90 border border-white/20 backdrop-blur-2xl rounded-3xl p-6 relative shadow-[0_16px_48px_rgba(0,0,0,0.5)] text-white">
             <button
               onClick={closeModal}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 transition"
+              className="absolute top-5 right-5 text-white/50 hover:text-white transition"
               aria-label="Yopish"
             >
               <X className="w-6 h-6" />
             </button>
 
-            <h2 className="text-xl font-bold text-slate-900 text-center mb-6">
+            <h2 className="text-xl font-bold text-white text-center mb-6 drop-shadow-sm">
               {currentStudentData.name} {currentStudentData.surname}
             </h2>
 
-            <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between gap-3 mb-6 border border-slate-100">
+            <div className="bg-white/10 border border-white/15 p-4 rounded-2xl flex items-center justify-between gap-3 mb-6 backdrop-blur-md">
               <input
                 type="number"
                 value={payAmount}
                 onChange={(e) => setPayAmount(e.target.value)}
                 placeholder="Enter sum"
-                className="w-28 min-w-0 bg-white rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500"
+                className="w-28 min-w-0 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white placeholder-white/40 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
               />
               <button
                 onClick={handlePay}
                 disabled={paying || !payAmount}
-                className="rounded-lg bg-[#00a2ff] hover:bg-blue-600 active:scale-95 disabled:opacity-50 text-white font-bold text-xs px-4 py-2.5 transition shrink-0"
+                className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:scale-95 disabled:opacity-40 disabled:grayscale text-white font-bold text-xs px-4 py-2.5 transition shadow-md border border-white/20 shrink-0"
               >
                 {paying ? "..." : "PAY"}
               </button>
-              <div className="text-right text-[11px] text-slate-400 shrink-0">
-                <p className="font-medium text-slate-500">Today</p>
+              <div className="text-right text-[11px] text-white/50 shrink-0">
+                <p className="font-medium text-white/80">Today</p>
                 <p>{formatDMY(todayISO())}</p>
               </div>
             </div>
 
-            <h3 className="font-semibold text-slate-800 mb-3 text-sm">
+            <h3 className="font-semibold text-white/80 mb-3 text-sm">
               Payment history
             </h3>
 
             {history.length === 0 ? (
-              <div className="bg-slate-50 rounded-xl p-4 text-center">
-                <p className="text-slate-400 text-xs">To'lovlar tarixi yo'q</p>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+                <p className="text-white/40 text-xs">To'lovlar tarixi yo'q</p>
               </div>
             ) : (
               <div className="flex flex-col gap-2">
                 {history.map((h, i) => (
                   <div
                     key={h.id || i}
-                    className="flex items-center justify-between bg-slate-100/80 rounded-xl px-4 py-2.5 text-xs font-medium"
+                    className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-medium"
                   >
-                    <span className="text-slate-500">{formatDMY(h.date)}</span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-white/60">{formatDMY(h.date)}</span>
+                    <span className="font-semibold text-emerald-400">
                       +{formatSum(h.amount)}
                     </span>
                   </div>

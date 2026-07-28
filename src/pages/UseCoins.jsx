@@ -1,13 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Gift, Coins as CoinsIcon, X } from "lucide-react";
+import {
+  Gift,
+  Coins as CoinsIcon,
+  X,
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Sparkles,
+  ShoppingBag,
+  Lock,
+} from "lucide-react";
 import { useStudentAuth } from "../context/StudentAuthContext";
 import { supabase } from "../supabaseClient";
 
-// Sovg'alar ro'yxati — hozircha kodning ichida. Narxni yoki nomini
-// o'zgartirish uchun shu ro'yxatni tahrirlang.
+// Sovg'alar ro'yxati
 const GIFTS = [
-  { id: "book", name: "Kitob", cost: 5000 },
+  { id: "book", name: "Essential Words 4000", cost: 5000 },
   { id: "pen-set", name: "Ruchka to'plami", cost: 1500 },
   { id: "notebook", name: "Daftar", cost: 1000 },
   { id: "bag", name: "Sumka", cost: 8000 },
@@ -21,11 +31,6 @@ const GIFTS = [
   { id: "watch", name: "Sport soat", cost: 15000 },
 ];
 
-// Telegram bot orqali o'qituvchiga xabar yuborish uchun.
-// .env fayliga quyidagilarni qo'shing (Vite loyihalarida VITE_ prefiksi shart):
-//   VITE_TELEGRAM_BOT_TOKEN=xxxxx:yyyyy
-//   VITE_TELEGRAM_CHAT_ID=123456789
-// .env o'zgargandan keyin dev serverni albatta qayta ishga tushiring.
 const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
@@ -62,8 +67,6 @@ async function notifyTeacher({ name, surname, phone, cost, giftName }) {
       console.error("Telegramga xabar yuborishda xatolik:", data);
     }
   } catch (err) {
-    // Telegram xabari yuborilmasa ham, coin allaqachon yechilgan bo'ladi —
-    // shuning uchun talabaga xatolik ko'rsatmaymiz, faqat konsolga yozamiz.
     console.error("Telegramga ulanishda xatolik:", err);
   }
 }
@@ -103,7 +106,7 @@ export default function UseCoins() {
   };
 
   const closeConfirm = () => {
-    if (confirming) return; // so'rov ketayotganda modalni yopib qo'ymaslik uchun
+    if (confirming) return;
     setSelectedGift(null);
     setErrorMsg("");
   };
@@ -113,8 +116,6 @@ export default function UseCoins() {
     setConfirming(true);
     setErrorMsg("");
 
-    // Balansni tasdiqlashdan oldin bazadan yangilab olamiz —
-    // ekrandagi eski (stale) qiymatga ishonib qolmaslik uchun.
     const { data: fresh, error: fetchError } = await supabase
       .from("students")
       .select("coins")
@@ -151,8 +152,6 @@ export default function UseCoins() {
 
     setProfile((prev) => (prev ? { ...prev, coins: newCoins } : prev));
 
-    // Coin muvaffaqiyatli yechildi — endi o'qituvchiga xabar yuboramiz.
-    // Bu qadam muvaffaqiyatsiz bo'lsa ham, xarid allaqachon amalga oshgan.
     await notifyTeacher({
       name: profile.name,
       surname: profile.surname,
@@ -169,30 +168,56 @@ export default function UseCoins() {
   const myCoins = Number(profile?.coins) || 0;
 
   return (
-    <div className="min-h-screen w-full flex justify-center bg-[#00173d]">
-      <div className="w-full max-w-md flex flex-col items-center px-6 pt-14 pb-10">
-        {/* Header */}
-        <div className="w-full flex items-center justify-between mb-2 gap-3">
+    <div className="min-h-screen w-full bg-[#090d16] text-slate-100 flex justify-center relative overflow-hidden">
+      {/* Orqa fondagi neonsimon yog'du */}
+      <div className="absolute -top-20 -left-20 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 -right-20 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md flex flex-col items-center px-5 pt-12 pb-10 z-10">
+        {/* Top Header Bar */}
+        <div className="w-full flex items-center justify-between mb-6">
           <button
             onClick={() => navigate("/student/coins")}
-            className="text-slate-200 font-semibold shrink-0"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-sm font-medium backdrop-blur-xl transition active:scale-95"
           >
-            ← Back
+            <ArrowLeft className="w-4 h-4" />
+            Orqaga
           </button>
-          <div className="flex items-center gap-1.5 bg-white/90 rounded-full pl-2.5 pr-3 py-1.5 shrink-0">
-            <CoinsIcon className="w-4 h-4 text-yellow-500" strokeWidth={2.5} />
-            <span className="font-bold text-slate-900 text-sm tabular-nums">
+
+          <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 backdrop-blur-xl rounded-2xl px-3.5 py-1.5">
+            <CoinsIcon className="w-4 h-4 text-amber-400" />
+            <span className="font-extrabold text-amber-400 text-sm tabular-nums">
               {loading ? "…" : myCoins}
             </span>
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-white text-center mb-8">
-          Sovg'alar
-        </h1>
+        {/* Title */}
+        <div className="w-full flex items-center justify-between mb-6 px-1">
+          <div>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              Sovg'alar do'koni
+              <Sparkles className="w-5 h-5 text-amber-400" />
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Yig'gan coinlaringizni ajoyib sovg'alarga almashtiring
+            </p>
+          </div>
+        </div>
 
-        {loading && <p className="text-slate-300">Yuklanmoqda...</p>}
+        {/* Skeleton Loading */}
+        {loading && (
+          <div className="w-full grid grid-cols-2 gap-3 animate-pulse">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="h-44 bg-slate-800/40 rounded-2xl border border-white/5"
+              />
+            ))}
+          </div>
+        )}
 
+        {/* Gifts Grid */}
         {!loading && (
           <div className="w-full grid grid-cols-2 gap-3">
             {GIFTS.map((gift) => {
@@ -200,27 +225,45 @@ export default function UseCoins() {
               return (
                 <div
                   key={gift.id}
-                  className="rounded-2xl bg-white/90 backdrop-blur-sm shadow-sm px-4 py-4 flex flex-col items-center gap-2"
+                  className="group relative rounded-2xl p-4 bg-slate-900/60 border border-white/10 backdrop-blur-xl flex flex-col items-center justify-between gap-3 transition-all duration-300 hover:border-white/20"
                 >
-                  <Gift className="w-8 h-8 text-blue-500" strokeWidth={2} />
-                  <p className="font-semibold text-slate-900 text-sm text-center leading-tight">
-                    {gift.name}
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <CoinsIcon
-                      className="w-3.5 h-3.5 text-yellow-500"
-                      strokeWidth={2.5}
-                    />
-                    <span className="text-sm font-bold text-slate-700 tabular-nums">
-                      {gift.cost}
-                    </span>
+                  <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                    <Gift className="w-7 h-7" />
                   </div>
+
+                  <div className="flex flex-col items-center text-center">
+                    <p className="font-bold text-white text-xs line-clamp-2 min-h-[32px] flex items-center justify-center">
+                      {gift.name}
+                    </p>
+
+                    <div className="flex items-center gap-1 mt-1 px-2.5 py-1 rounded-xl bg-slate-950/60 border border-white/5">
+                      <CoinsIcon className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-xs font-extrabold text-amber-400 tabular-nums">
+                        {gift.cost}
+                      </span>
+                    </div>
+                  </div>
+
                   <button
                     onClick={() => openConfirm(gift)}
                     disabled={!canAfford}
-                    className="w-full mt-1 rounded-full bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-bold py-2 transition"
+                    className={`w-full mt-1 py-2.5 rounded-xl font-bold text-xs transition duration-200 flex items-center justify-center gap-1.5 active:scale-95 ${
+                      canAfford
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/20"
+                        : "bg-slate-800/80 text-slate-500 border border-white/5 cursor-not-allowed active:scale-100"
+                    }`}
                   >
-                    Buy
+                    {canAfford ? (
+                      <>
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span>Olish</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Yetmaydi</span>
+                      </>
+                    )}
                   </button>
                 </div>
               );
@@ -229,77 +272,95 @@ export default function UseCoins() {
         )}
       </div>
 
-      {/* Tasdiqlash oynasi */}
+      {/* Tasdiqlash Modal Oynasi */}
       {selectedGift && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center px-6 z-50">
-          <div className="w-full max-w-sm bg-white rounded-3xl px-6 py-6 relative">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-5 z-50 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-slate-900 border border-white/10 rounded-3xl p-6 relative shadow-2xl overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
+
             <button
               onClick={closeConfirm}
               disabled={confirming}
-              className="absolute top-5 right-5 text-slate-500 hover:text-slate-800 disabled:opacity-40"
+              className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white border border-white/5 transition disabled:opacity-40"
               aria-label="Yopish"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="flex flex-col items-center gap-3 mb-6 mt-2">
-              <Gift className="w-10 h-10 text-blue-500" strokeWidth={2} />
-              <h2 className="text-lg font-bold text-slate-900 text-center">
+            <div className="flex flex-col items-center text-center mt-2 mb-6">
+              <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-3">
+                <Gift className="w-8 h-8" />
+              </div>
+              <h2 className="text-lg font-bold text-white">
                 {selectedGift.name}
               </h2>
-              <div className="flex items-center gap-1">
-                <CoinsIcon
-                  className="w-4 h-4 text-yellow-500"
-                  strokeWidth={2.5}
-                />
-                <span className="font-bold text-slate-700">
+              <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <CoinsIcon className="w-4 h-4 text-amber-400" />
+                <span className="font-extrabold text-amber-400 text-sm">
                   {selectedGift.cost} coins
                 </span>
               </div>
-              <p className="text-sm text-slate-500 text-center">
-                Ushbu sovg'ani sotib olishni tasdiqlaysizmi?
+              <p className="text-xs text-slate-400 mt-3">
+                Ushbu sovg'ani sotib olishni tasdiqlaysizmi? Hisobingizdan
+                coinlar yechiladi.
               </p>
             </div>
 
             {errorMsg && (
-              <p className="text-red-500 text-sm font-semibold text-center mb-4">
-                {errorMsg}
-              </p>
+              <div className="mb-4 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2 text-rose-400 text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={closeConfirm}
                 disabled={confirming}
-                className="flex-1 rounded-full bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-slate-700 font-bold py-3 transition"
+                className="flex-1 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-white/5 transition active:scale-95 disabled:opacity-50"
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleConfirmPurchase}
                 disabled={confirming}
-                className="flex-1 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-bold py-3 transition"
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-blue-600/25 transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
-                {confirming ? "..." : "Tasdiqlash"}
+                {confirming ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Kutilmoqda...</span>
+                  </>
+                ) : (
+                  <span>Tasdiqlash</span>
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Muvaffaqiyat oynasi */}
+      {/* Muvaffaqiyat (Success) Modal Oynasi */}
       {showSuccess && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center px-6 z-50">
-          <div className="w-full max-w-sm bg-white rounded-3xl px-6 py-8 flex flex-col items-center gap-4">
-            <Gift className="w-12 h-12 text-green-500" strokeWidth={2} />
-            <p className="text-lg font-bold text-slate-900 text-center">
-              Sovg'angiz 1 hafta ichida olasiz
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center px-5 z-50 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-slate-900 border border-white/10 rounded-3xl p-6 flex flex-col items-center text-center relative shadow-2xl">
+            <div className="p-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-4 animate-bounce">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+
+            <h3 className="text-lg font-bold text-white mb-1">
+              Xarid muvaffaqiyatli!
+            </h3>
+            <p className="text-xs text-slate-400 mb-6">
+              Sovg'angiz tayyorlanmoqda va 1 hafta ichida o'qituvchingiz
+              tomonidan topshiriladi.
             </p>
+
             <button
               onClick={() => setShowSuccess(false)}
-              className="w-full rounded-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 transition"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/25 transition active:scale-95"
             >
-              OK
+              Tushunarli (OK)
             </button>
           </div>
         </div>
