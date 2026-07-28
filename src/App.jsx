@@ -14,6 +14,8 @@ import StudentSettings from "./pages/StudentSettings";
 import StudentCoins from "./pages/Studentcoins";
 
 import UseCoins from "./pages/UseCoins";
+import Homeworks from "./pages/Homeworks";
+import StudentHomework from "./pages/StudentHomework";
 
 function isAuthenticated() {
   return localStorage.getItem("isAuthenticated") === "true";
@@ -53,6 +55,8 @@ const App = () => {
                 </RequireStudentAuth>
               }
             />
+            <Route path="/homeworks" element={<Homeworks />} />
+            <Route path="/student/homework" element={<StudentHomework />} />
             <Route
               path="/login"
               element={

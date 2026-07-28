@@ -16,28 +16,71 @@ export default function StudentHome() {
   const navigate = useNavigate();
   const { student } = useStudentAuth();
   const [profile, setProfile] = useState(null);
+  const [hasHomework, setHasHomework] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data, error } = await supabase
+    const fetchData = async () => {
+      const { data: studentData, error: studentError } = await supabase
         .from("students")
-        .select("coins, name, surname")
+        .select("coins, name, surname, group_id")
         .eq("id", student.id)
         .single();
 
-      if (!error) setProfile(data);
+      if (!studentError && studentData) {
+        setProfile(studentData);
+
+        if (studentData.group_id) {
+          const { data: hwData, error: hwError } = await supabase
+            .from("homeworks")
+            .select("id, created_at")
+            .eq("group_id", studentData.group_id)
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (!hwError && hwData && hwData.length > 0) {
+            const latestHomeworkId = hwData[0].id;
+
+            // LocalStorage dan oxirgi ko'rilgan vazifa ID sini tekshiramiz
+            const viewedHomeworkId = localStorage.getItem(
+              `viewed_hw_${student.id}`,
+            );
+
+            // Agar bazadagi oxirgi vazifa ID si ko'rilgan ID bilan bir xil bo'lmasa, demak yangi vazifa bor!
+            if (viewedHomeworkId !== String(latestHomeworkId)) {
+              setHasHomework(true);
+            }
+          }
+        }
+      }
       setLoading(false);
     };
 
-    if (student) fetchProfile();
+    if (student) fetchData();
   }, [student]);
+
+  // Kartochka bosilganda o'qilgan deb belgilaymiz va sahifaga o'tamiz
+  const handleOpenHomework = async () => {
+    if (profile?.group_id) {
+      // Bazadan oxirgi vazifa ID sini olib, localStorage ga saqlab qo'yamiz
+      const { data } = await supabase
+        .from("homeworks")
+        .select("id")
+        .eq("group_id", profile.group_id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (data && data.length > 0) {
+        localStorage.setItem(`viewed_hw_${student.id}`, String(data[0].id));
+      }
+    }
+    navigate("/student/homework");
+  };
 
   if (!student) return null;
 
   return (
     <div className="min-h-screen w-full bg-[#090d16] text-slate-100 flex justify-center relative overflow-hidden">
-      {/* Orqa fondagi zamonaviy neonsimon yog'du (Background Gradients) */}
       <div className="absolute -top-24 -left-20 w-72 h-72 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 -right-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -60,7 +103,6 @@ export default function StudentHome() {
           </button>
         </div>
 
-        {/* Loading state - Modern Skeleton UI */}
         {loading ? (
           <div className="w-full space-y-6 animate-pulse">
             <div className="h-28 w-full bg-slate-800/40 rounded-3xl border border-white/5" />
@@ -146,24 +188,31 @@ export default function StudentHome() {
                   <div className="w-full pt-1 border-t border-white/5" />
                 </div>
 
-                {/* HOMEWORKS CARD (Upcoming) */}
-                <div className="relative rounded-2xl p-3 bg-slate-900/40 border border-white/5 backdrop-blur-md flex flex-col items-center justify-between gap-3 opacity-60">
-                  <div className="p-2.5 rounded-xl bg-slate-800/80 text-slate-500 border border-white/5">
+                {/* HOMEWORKS CARD (Qizil doiracha bilan) */}
+                <button
+                  onClick={handleOpenHomework}
+                  className="group relative rounded-2xl p-3 bg-gradient-to-b from-blue-500/10 via-slate-900/60 to-slate-900/90 border border-blue-500/20 hover:border-blue-500/40 backdrop-blur-xl flex flex-col items-center justify-between gap-3 transition-all duration-300 hover:-translate-y-1 active:scale-95 shadow-lg hover:shadow-blue-500/10"
+                >
+                  {hasHomework && (
+                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-bounce">
+                      1
+                    </span>
+                  )}
+
+                  <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300">
                     <BookOpen className="w-6 h-6" />
                   </div>
 
                   <div className="flex flex-col items-center">
-                    <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Tez kunda
-                    </span>
-                    <span className="text-[11px] font-medium text-slate-500 mt-1">
-                      Homeworks
+                    <span className="text-xs font-bold text-white mt-1">
+                      Vazifalar
                     </span>
                   </div>
 
-                  <div className="w-full pt-1 border-t border-white/5" />
-                </div>
+                  <div className="w-full pt-1 flex justify-center border-t border-white/5">
+                    <ChevronRight className="w-3.5 h-3.5 text-blue-400/60 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
               </div>
             </>
           )

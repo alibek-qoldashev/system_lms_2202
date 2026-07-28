@@ -1,6 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardCheck, ListChecks, Lock, LogOut } from "lucide-react";
+import {
+  ClipboardCheck,
+  ListChecks,
+  Lock,
+  LogOut,
+  BookOpen,
+} from "lucide-react";
 import Icon2 from "../img/icon2.png";
 
 const menuCards = [
@@ -62,7 +68,17 @@ const menuCards = [
       />
     ),
   },
-  { key: "upcoming1", label: "Upcoming...", path: null, icon: null },
+  {
+    key: "homeworks",
+    label: "Homeworks",
+    path: "/homeworks",
+    icon: (
+      <BookOpen
+        className="w-9 h-9 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]"
+        strokeWidth={2}
+      />
+    ),
+  },
   { key: "upcoming2", label: "Upcoming...", path: null, icon: null },
   { key: "upcoming3", label: "Upcoming...", path: null, icon: null },
 ];
@@ -84,15 +100,10 @@ export default function Home() {
       <div className="relative z-10 w-full max-w-md flex flex-col items-center px-6 py-8 min-h-screen justify-between">
         {/* Header */}
         <div className="w-full flex items-center justify-between pt-4">
-          {/* Bo'sh div (balans uchun) */}
           <div className="w-10" />
-
-          {/* Logo */}
           <div className="flex justify-center">
             <img src={Icon2} className="w-28 drop-shadow-lg" alt="Logo" />
           </div>
-
-          {/* Logout Button */}
           <button
             onClick={handleLogout}
             aria-label="Chiqish"
