@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X } from "lucide-react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import { useGroups } from "./GroupsContext";
 
 function todayISO() {
@@ -112,9 +112,9 @@ export default function Payment() {
         <div className="w-full flex items-center justify-between mb-8">
           <button
             onClick={() => navigate("/")}
-            className="text-white/80 hover:text-white font-medium flex items-center gap-1 transition"
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition"
           >
-            ← Home
+            <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <h1 className="text-2xl font-bold text-white text-center flex-1 drop-shadow-sm">
             Payment

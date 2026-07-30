@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -95,9 +95,9 @@ export default function Group() {
         <div className="w-full flex items-center justify-between mb-8">
           <button
             onClick={() => (formOpen ? setFormOpen(false) : navigate("/"))}
-            className="text-white/80 hover:text-white font-medium transition flex items-center gap-1"
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition"
           >
-            ← {formOpen ? "Groups" : "Home"}
+            <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <h1 className="text-2xl font-bold text-white text-center flex-1 drop-shadow-sm">
             Groups
@@ -176,7 +176,7 @@ export default function Group() {
           <div className="w-full flex flex-col gap-4">
             <div className="w-full flex justify-between items-center mb-1">
               <span className="text-sm text-white/60 font-medium">
-                {groups.length} guruh
+                {groups.length} Group
               </span>
               <button
                 onClick={() => {

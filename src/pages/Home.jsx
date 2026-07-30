@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ClipboardCheck,
@@ -85,10 +85,20 @@ const menuCards = [
 
 export default function Home() {
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem("isAuthenticated");
+    setShowLogoutModal(false);
     navigate("/");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   return (
@@ -105,7 +115,7 @@ export default function Home() {
             <img src={Icon2} className="w-28 drop-shadow-lg" alt="Logo" />
           </div>
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             aria-label="Chiqish"
             className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 active:scale-95 flex items-center justify-center transition shadow-md group"
           >
@@ -158,6 +168,31 @@ export default function Home() {
           by Qo&apos;ldoshev Alibek
         </p>
       </div>
+
+      {/* Logout tasdiqlash oynasi */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="w-full max-w-xs rounded-3xl bg-[#0a2450]/90 border border-white/15 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.4)] p-6 flex flex-col items-center gap-5">
+            <p className="text-white text-sm font-medium text-center leading-relaxed">
+              Confirm Exit
+            </p>
+            <div className="w-full flex gap-3">
+              <button
+                onClick={cancelLogout}
+                className="flex-1 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-white text-sm font-semibold backdrop-blur-md hover:bg-white/20 active:scale-95 transition"
+              >
+                No{" "}
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 py-2.5 rounded-2xl bg-red-500 text-white text-sm font-semibold shadow-md hover:bg-red-600 active:scale-95 transition"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,11 @@ import { pad2, formatRealTimeDate } from "../utils/formatters";
 import AttendanceDatePicker from "../components/AttendanceDatePicker";
 import AttendanceStudentRow from "../components/AttendanceStudentRow";
 import GradeModal from "../components/modals/GradeModal";
+import { ArrowLeft } from "lucide-react";
+
+function daysInMonth(month, year) {
+  return new Date(year, month, 0).getDate();
+}
 
 export default function Attendance() {
   const navigate = useNavigate();
@@ -29,6 +34,9 @@ export default function Attendance() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedStudentId, setExpandedStudentId] = useState(null);
   const [gradeStudent, setGradeStudent] = useState(null);
+
+  // Kalendarda nuqta bilan belgilash uchun: shu oyda davomat kiritilgan kunlar
+  const [monthAttendanceDates, setMonthAttendanceDates] = useState(new Set());
 
   const group = selectedGroupId ? getGroup(selectedGroupId) : null;
 
@@ -61,6 +69,30 @@ export default function Attendance() {
     setAttendanceLoading(false);
   }, []);
 
+  // Kalendarda "Belgilangan" nuqtalarini ko'rsatish uchun — shu oyning barcha
+  // davomat sanalarini bitta so'rovda olib kelamiz (kun-kun so'ramaymiz)
+  const fetchMonthAttendanceDates = useCallback(
+    async (groupId, year, month) => {
+      const start = `${year}-${pad2(month)}-01`;
+      const end = `${year}-${pad2(month)}-${pad2(daysInMonth(month, year))}`;
+
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("date")
+        .eq("group_id", groupId)
+        .gte("date", start)
+        .lte("date", end);
+
+      if (error) {
+        console.error("Oylik davomat sanalarini yuklashda xatolik:", error);
+        return;
+      }
+
+      setMonthAttendanceDates(new Set((data || []).map((row) => row.date)));
+    },
+    [],
+  );
+
   useEffect(() => {
     if (selectedGroupId) {
       fetchAttendance(selectedGroupId, selectedISO);
@@ -70,6 +102,23 @@ export default function Attendance() {
       setPendingStatus({});
     }
   }, [selectedGroupId, selectedISO, fetchAttendance]);
+
+  useEffect(() => {
+    if (selectedGroupId) {
+      fetchMonthAttendanceDates(
+        selectedGroupId,
+        selectedDate.year,
+        selectedDate.month,
+      );
+    } else {
+      setMonthAttendanceDates(new Set());
+    }
+  }, [
+    selectedGroupId,
+    selectedDate.year,
+    selectedDate.month,
+    fetchMonthAttendanceDates,
+  ]);
 
   const toggleExpand = (studentId) => {
     setExpandedStudentId((prev) => (prev === studentId ? null : studentId));
@@ -120,7 +169,14 @@ export default function Attendance() {
 
     setSavedStatus((prev) => ({ ...prev, ...pendingStatus }));
     setPendingStatus({});
+    // Shu kun endi "belgilangan" sifatida kalendarda nuqta bilan ko'rinsin
+    setMonthAttendanceDates((prev) => new Set(prev).add(selectedISO));
     setSubmitting(false);
+  };
+
+  const handleCancel = () => {
+    setPendingStatus({});
+    setExpandedStudentId(null);
   };
 
   const handleSaveGrade = (delta) =>
@@ -138,16 +194,16 @@ export default function Attendance() {
           {selectedGroupId ? (
             <button
               onClick={() => setSelectedGroupId(null)}
-              className="text-white/80 hover:text-white font-medium shrink-0 transition"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition"
             >
-              ← Groups
+              <ArrowLeft className="w-5 h-5 text-white" />
             </button>
           ) : (
             <button
               onClick={() => navigate("/")}
-              className="text-white/80 hover:text-white font-medium shrink-0 transition"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition"
             >
-              ← Home
+              <ArrowLeft className="w-5 h-5 text-white" />
             </button>
           )}
 
@@ -222,6 +278,8 @@ export default function Attendance() {
             <AttendanceDatePicker
               selectedDate={selectedDate}
               onChange={setSelectedDate}
+              lessonDaysStr={group.days}
+              markedDates={monthAttendanceDates}
             />
 
             {attendanceLoading && (
@@ -252,15 +310,26 @@ export default function Attendance() {
                 ))}
             </div>
 
-            {!attendanceLoading && group.students.length > 0 && (
-              <button
-                onClick={handleSubmit}
-                disabled={!hasPendingChanges || submitting}
-                className="w-full mt-4 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] disabled:opacity-50 disabled:grayscale text-white text-lg font-semibold py-3.5 shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-all duration-200 border border-white/20"
-              >
-                {submitting ? "Saqlanmoqda..." : "Submit"}
-              </button>
-            )}
+            {!attendanceLoading &&
+              group.students.length > 0 &&
+              hasPendingChanges && (
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={handleCancel}
+                    disabled={submitting}
+                    className="flex-1 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-[0.98] disabled:opacity-50 text-white text-lg font-semibold py-3.5 border border-white/20 transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] disabled:opacity-50 disabled:grayscale text-white text-lg font-semibold py-3.5 shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-all duration-200 border border-white/20"
+                  >
+                    {submitting ? "Saqlanmoqda..." : "Submit"}
+                  </button>
+                </div>
+              )}
           </div>
         )}
 

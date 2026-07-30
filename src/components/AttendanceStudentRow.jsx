@@ -41,21 +41,23 @@ export default function AttendanceStudentRow({
       </div>
 
       {isExpanded && (
-        <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-300/70">
-          <button
-            onClick={() => onChooseStatus(student.id, "present")}
-            aria-label="Keldi"
-            className="w-9 h-9 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition"
-          >
-            <Check className="w-5 h-5 text-white" strokeWidth={3} />
-          </button>
-          <button
-            onClick={() => onChooseStatus(student.id, "absent")}
-            aria-label="Kelmadi"
-            className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition"
-          >
-            <X className="w-5 h-5 text-white" strokeWidth={3} />
-          </button>
+        <div className="flex justify-end mt-2">
+          <div className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg px-2 py-2">
+            <button
+              onClick={() => onChooseStatus(student.id, "present")}
+              aria-label="Keldi"
+              className="w-9 h-9 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition"
+            >
+              <Check className="w-5 h-5 text-white" strokeWidth={3} />
+            </button>
+            <button
+              onClick={() => onChooseStatus(student.id, "absent")}
+              aria-label="Kelmadi"
+              className="w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition"
+            >
+              <X className="w-5 h-5 text-white" strokeWidth={3} />
+            </button>
+          </div>
         </div>
       )}
     </div>

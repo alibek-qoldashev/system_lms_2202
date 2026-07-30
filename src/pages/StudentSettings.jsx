@@ -28,6 +28,9 @@ export default function StudentSettings() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Chiqishni tasdiqlash oynasi
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   const handleSave = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -66,6 +69,11 @@ export default function StudentSettings() {
     }
   };
 
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
+    navigate("/login");
+  };
+
   if (!student) return null;
 
   return (
@@ -90,7 +98,7 @@ export default function StudentSettings() {
           </h1>
 
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => setShowLogoutConfirm(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-sm font-medium backdrop-blur-xl transition active:scale-95"
           >
             <LogOut className="w-4 h-4" />
@@ -208,6 +216,44 @@ export default function StudentSettings() {
           </form>
         </div>
       </div>
+
+      {/* Chiqishni tasdiqlash oynasi */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowLogoutConfirm(false)}
+          />
+          <div className="relative w-full max-w-sm rounded-3xl bg-slate-900/90 border border-white/10 backdrop-blur-2xl shadow-2xl p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 mb-4">
+                <LogOut className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-white">
+                Chiqishni tasdiqlaysizmi?
+              </h3>
+              <p className="text-sm text-slate-400 mt-1.5">
+                Hisobingizdan chiqasiz va login sahifasiga qaytasiz.
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 rounded-2xl bg-slate-800/60 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white text-sm font-semibold transition active:scale-95"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white text-sm font-semibold shadow-lg shadow-rose-600/25 transition active:scale-95"
+              >
+                Chiqish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

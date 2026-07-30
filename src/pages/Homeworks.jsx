@@ -57,6 +57,16 @@ export default function Homeworks() {
     }
   };
 
+  // Yuqoridagi strelka: vazifa yozish ekranida bo'lsa guruhlar ro'yxatiga,
+  // aks holda Home sahifasiga qaytaradi
+  const handleBack = () => {
+    if (selectedGroup) {
+      setSelectedGroup(null);
+    } else {
+      navigate("/home");
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#00173d] text-slate-100 flex justify-center relative overflow-hidden">
       {/* 
@@ -73,7 +83,7 @@ export default function Homeworks() {
         <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 backdrop-blur-xl shadow-[0_8px_30px_rgba(16,185,129,0.2)]">
           <CheckCircle className="w-5 h-5 text-emerald-400" />
           <span className="text-sm font-semibold text-white">
-            Xabar muvaffaqiyatli jo'natildi!
+            Message sent succesfully!
           </span>
         </div>
       </div>
@@ -84,13 +94,13 @@ export default function Homeworks() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <button
-            onClick={() => navigate("/home")}
+            onClick={handleBack}
             className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-blue-400" /> Uy Vazifalari
+            <BookOpen className="w-5 h-5 text-blue-400" /> Homeworks
           </h1>
         </div>
 
@@ -98,7 +108,7 @@ export default function Homeworks() {
           // 1. Guruhlar ro'yxati
           <div className="flex flex-col gap-3">
             <p className="text-sm text-white/60 mb-2">
-              Vazifa berish uchun guruhni tanlang:
+              Choose group to give Homework:
             </p>
             {loading ? (
               <Loader2 className="w-6 h-6 animate-spin text-blue-400 mx-auto" />
@@ -118,37 +128,29 @@ export default function Homeworks() {
           // 2. Vazifa yozish qismi
           <div className="flex flex-col gap-4 animate-in fade-in zoom-in duration-300">
             <div className="flex justify-between items-center bg-white/10 p-3 rounded-xl border border-white/10">
-              <span className="text-sm text-white/80">Tanlangan guruh:</span>
+              <span className="text-sm text-white/80">Choosen group:</span>
               <span className="font-bold text-white">{selectedGroup.name}</span>
             </div>
 
             <textarea
               className="w-full h-40 p-4 rounded-2xl bg-black/20 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-blue-500 resize-none"
-              placeholder="Uy vazifasini bu yerga yozing..."
+              placeholder="Type here..."
               value={homeworkText}
               onChange={(e) => setHomeworkText(e.target.value)}
             />
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setSelectedGroup(null)}
-                className="flex-1 py-3 rounded-xl bg-white/10 border border-white/10 text-white font-medium hover:bg-white/20 transition"
-              >
-                Orqaga
-              </button>
-              <button
-                onClick={handleSaveHomework}
-                disabled={saving || !homeworkText.trim()}
-                className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold flex items-center justify-center gap-2 transition"
-              >
-                {saving ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                Yuborish
-              </button>
-            </div>
+            <button
+              onClick={handleSaveHomework}
+              disabled={saving || !homeworkText.trim()}
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold flex items-center justify-center gap-2 transition"
+            >
+              {saving ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              Send
+            </button>
           </div>
         )}
       </div>

@@ -47,7 +47,7 @@ export default function LoginPage() {
 
     //   {/* Asosiy xabar kartochkasi */}
     //   <div className="relative z-10 w-full max-w-md p-8 rounded-3xl bg-slate-900/80 border border-white/10 backdrop-blur-2xl shadow-2xl flex flex-col items-center text-center">
-        
+
     //     {/* Vizual Ikonka */}
     //     <div className="relative mb-8">
     //       <div className="p-5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 relative z-10">
@@ -75,8 +75,6 @@ export default function LoginPage() {
     //     System Status: Under Maintenance
     //   </p>
     // </div>
-
-
 
     <div className="relative min-h-screen w-full flex justify-center items-center bg-[#00173d] overflow-hidden">
       {/* Orqa fondagi iOS Liquid Glass doiralari (Glow effect) */}
@@ -142,7 +140,10 @@ export default function LoginPage() {
         <p className="pb-4 text-center text-xs text-white/50">
           Copyright © 2026
           <br />
-          by Qo&apos;ldoshev Alibek
+          by{" "}
+          <a href="https://qoldoshev-alibek.vercel.app/">
+            <u>Qo'ldoshev Alibek</u>
+          </a>
         </p>
       </div>
     </div>
