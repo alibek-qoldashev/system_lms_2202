@@ -79,7 +79,7 @@ const menuCards = [
       />
     ),
   },
-  { key: "upcoming2", label: "Upcoming...", path: null, icon: null },
+  { key: "upcoming3", label: "Upcoming...", path: null, icon: null },
   { key: "upcoming3", label: "Upcoming...", path: null, icon: null },
 ];
 
