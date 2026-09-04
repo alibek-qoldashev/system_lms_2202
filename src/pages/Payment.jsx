@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import { useGroups } from "./GroupsContext";
 
+const LESSONS_PER_CYCLE = 12;
+const WARNING_AT = 2; // shu qadar dars qolganda "sariq" (ogohlantirish)
+
 function todayISO() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, "0");
@@ -21,6 +24,14 @@ function formatDMY(isoDate) {
 function formatSum(n) {
   const num = Number(n) || 0;
   return num.toLocaleString("en-US").replace(/,/g, " ");
+}
+
+// Dars soni asosida holatni aniqlaydi: "due" (to'lov kerak), "warning" (ogohlantirish), "ok"
+function getPaymentStatus(lessonsSincePayment) {
+  const count = Number(lessonsSincePayment) || 0;
+  if (count >= LESSONS_PER_CYCLE) return "due";
+  if (count >= LESSONS_PER_CYCLE - WARNING_AT) return "warning";
+  return "ok";
 }
 
 export default function Payment() {
@@ -47,10 +58,13 @@ export default function Payment() {
 
   const term = search.trim().toLowerCase();
 
-  // Qidiruv bo'lsa — ism bo'yicha. Qidiruv bo'sh bo'lsa — faqat balansi 0 va qarzdorlar
+  // Qidiruv bo'lsa — ism bo'yicha, hammasi ko'rinadi.
+  // Qidiruv bo'sh bo'lsa — faqat e'tibor talab qiladiganlar (to'lov kerak yoki yaqin)
   const filteredStudents = useMemo(() => {
     if (!term) {
-      return allStudents.filter((s) => (Number(s.paymentSum) || 0) <= 0);
+      return allStudents.filter(
+        (s) => getPaymentStatus(s.lessonsSincePayment) !== "ok",
+      );
     }
     return allStudents.filter((s) =>
       `${s.name} ${s.surname}`.toLowerCase().includes(term),
@@ -100,6 +114,9 @@ export default function Payment() {
     if (!currentStudentData || !currentStudentData.paymentHistory) return [];
     return currentStudentData.paymentHistory.slice(0, 3);
   }, [currentStudentData]);
+
+  const currentLessons = Number(currentStudentData?.lessonsSincePayment) || 0;
+  const currentStatus = getPaymentStatus(currentLessons);
 
   return (
     <div className="relative min-h-screen w-full flex justify-center bg-[#00173d] overflow-hidden">
@@ -152,7 +169,7 @@ export default function Payment() {
         {!loading && !term && filteredStudents.length === 0 && (
           <div className="w-full rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] px-6 py-12">
             <p className="text-white/70 text-xl font-bold text-center">
-              no money today
+              Hammasi joyida — to'lov kutilmayapti
             </p>
           </div>
         )}
@@ -160,15 +177,19 @@ export default function Payment() {
         {!loading && filteredStudents.length > 0 && (
           <div className="w-full flex flex-col gap-3">
             {filteredStudents.map((s) => {
-              const balance = Number(s.paymentSum) || 0;
-              let badgeStyle =
-                "bg-emerald-500/20 border-emerald-400/30 text-emerald-300"; // Yashil
+              const status = getPaymentStatus(s.lessonsSincePayment);
+              let badgeStyle = "bg-white/5 border-white/15 text-white/70"; // neutral (faqat qidiruvda ko'rinadi)
+              let label = `${Number(s.lessonsSincePayment) || 0}/${LESSONS_PER_CYCLE} dars`;
 
-              if (balance < 0) {
-                badgeStyle = "bg-rose-500/20 border-rose-400/30 text-rose-300"; // Qizil
-              } else if (balance === 0) {
+              if (status === "due") {
+                badgeStyle = "bg-rose-500/20 border-rose-400/30 text-rose-300";
+                label = "To'lov kerak";
+              } else if (status === "warning") {
+                const left =
+                  LESSONS_PER_CYCLE - (Number(s.lessonsSincePayment) || 0);
                 badgeStyle =
-                  "bg-amber-500/20 border-amber-400/30 text-amber-300"; // Sariq
+                  "bg-amber-500/20 border-amber-400/30 text-amber-300";
+                label = `${left} dars qoldi`;
               }
 
               return (
@@ -180,9 +201,8 @@ export default function Payment() {
                   <span className="font-semibold text-white truncate drop-shadow-sm">
                     {s.name} {s.surname}
                   </span>
-                  <span className="font-bold shrink-0 drop-shadow-sm">
-                    {balance > 0 ? "+" : ""}
-                    {formatSum(balance)} so'm
+                  <span className="font-bold shrink-0 drop-shadow-sm text-sm">
+                    {label}
                   </span>
                 </button>
               );
@@ -210,9 +230,24 @@ export default function Payment() {
               <X className="w-6 h-6" />
             </button>
 
-            <h2 className="text-xl font-bold text-white text-center mb-6 drop-shadow-sm">
+            <h2 className="text-xl font-bold text-white text-center mb-2 drop-shadow-sm">
               {currentStudentData.name} {currentStudentData.surname}
             </h2>
+
+            <p
+              className={`text-center text-sm font-semibold mb-6 ${
+                currentStatus === "due"
+                  ? "text-rose-400"
+                  : currentStatus === "warning"
+                    ? "text-amber-400"
+                    : "text-white/60"
+              }`}
+            >
+              {currentLessons}/{LESSONS_PER_CYCLE} dars o'tilgan
+              {currentStatus === "due" && " — to'lov kerak"}
+              {currentStatus === "warning" &&
+                ` — ${LESSONS_PER_CYCLE - currentLessons} dars qoldi`}
+            </p>
 
             <div className="bg-white/10 border border-white/15 p-4 rounded-2xl flex items-center justify-between gap-3 mb-6 backdrop-blur-md">
               <input

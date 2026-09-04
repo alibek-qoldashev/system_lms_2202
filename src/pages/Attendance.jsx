@@ -14,7 +14,7 @@ function daysInMonth(month, year) {
 
 export default function Attendance() {
   const navigate = useNavigate();
-  const { groups, loading, getGroup, adjustPaymentSum, adjustCoins } =
+  const { groups, loading, getGroup, adjustLessonsCount, adjustCoins } =
     useGroups();
 
   const [selectedGroupId, setSelectedGroupId] = useState(null);
@@ -155,15 +155,11 @@ export default function Attendance() {
         continue;
       }
 
-      const student = group?.students.find((s) => s.id === studentId);
-      const lessonPrice = Number(student?.lessonPrice) || 0;
-
-      if (lessonPrice > 0) {
-        if (status === "present" && prevStatus !== "present") {
-          await adjustPaymentSum(selectedGroupId, studentId, -lessonPrice);
-        } else if (prevStatus === "present" && status !== "present") {
-          await adjustPaymentSum(selectedGroupId, studentId, lessonPrice);
-        }
+      // "Keldi" deb belgilansa — dars hisoblagichi +1, bekor qilinsa -1
+      if (status === "present" && prevStatus !== "present") {
+        await adjustLessonsCount(selectedGroupId, studentId, 1);
+      } else if (prevStatus === "present" && status !== "present") {
+        await adjustLessonsCount(selectedGroupId, studentId, -1);
       }
     }
 

@@ -82,10 +82,9 @@ export function GroupsProvider({ children }) {
           }
           return {
             ...s,
-            paymentSum: Number(s.payment_sum) || 0,
             paymentHistory: Array.isArray(history) ? history : [],
-            lessonPrice: Number(s.lesson_price) || 0,
             coins: Number(s.coins) || 0,
+            lessonsSincePayment: Number(s.lessons_since_payment) || 0,
           };
         }),
     }));
@@ -187,9 +186,8 @@ export function GroupsProvider({ children }) {
         age,
         phone: student.phone,
         position,
-        payment_sum: 0,
         payment_history: [],
-        lesson_price: 0,
+        lessons_since_payment: 0,
         password: lastDigits(student.phone),
       })
       .select()
@@ -209,10 +207,9 @@ export function GroupsProvider({ children }) {
                 ...g.students,
                 {
                   ...data,
-                  paymentSum: 0,
                   paymentHistory: [],
-                  lessonPrice: 0,
                   coins: 0,
+                  lessonsSincePayment: 0,
                 },
               ],
             }
@@ -222,16 +219,7 @@ export function GroupsProvider({ children }) {
   };
 
   const updateStudent = async (groupId, studentId, updates) => {
-    const group = groups.find((g) => g.id === groupId);
-    const existingStudent = group?.students.find((s) => s.id === studentId);
     const age = toNumberOrNull(updates.age);
-
-    const paymentSum =
-      updates.paymentSum === undefined ||
-      updates.paymentSum === null ||
-      updates.paymentSum === ""
-        ? Number(existingStudent?.paymentSum) || 0
-        : Number(updates.paymentSum);
 
     const { error } = await supabase
       .from("students")
@@ -240,7 +228,6 @@ export function GroupsProvider({ children }) {
         surname: updates.surname,
         age,
         phone: updates.phone,
-        payment_sum: paymentSum,
       })
       .eq("id", studentId);
 
@@ -262,7 +249,6 @@ export function GroupsProvider({ children }) {
                       surname: updates.surname,
                       age,
                       phone: updates.phone,
-                      paymentSum,
                     }
                   : s,
               ),
@@ -344,6 +330,9 @@ export function GroupsProvider({ children }) {
   };
 
   // --- FINANCIAL & COIN ACTIONS ---
+
+  // O'quvchi to'lov qilganda: tarixga yoziladi va "oxirgi to'lovdan beri
+  // kelgan darslar" hisoblagichi 0 ga tushiriladi (yangi 12 dars sikli boshlanadi)
   const addPayment = async (groupId, studentId, amount) => {
     const numAmount = Number(amount);
     if (!numAmount || numAmount <= 0) return { error: "Noto'g'ri summa" };
@@ -352,8 +341,6 @@ export function GroupsProvider({ children }) {
     const student = group?.students.find((s) => s.id === studentId);
     if (!student) return { error: "O'quvchi topilmadi" };
 
-    const newPaymentSum = (Number(student.paymentSum) || 0) + numAmount;
-    const newLessonPrice = numAmount / 12;
     const newRecord = {
       id: Date.now().toString(),
       amount: numAmount,
@@ -364,9 +351,8 @@ export function GroupsProvider({ children }) {
     const { error: studentError } = await supabase
       .from("students")
       .update({
-        payment_sum: newPaymentSum,
         payment_history: updatedHistory,
-        lesson_price: newLessonPrice,
+        lessons_since_payment: 0,
       })
       .eq("id", studentId);
 
@@ -384,9 +370,8 @@ export function GroupsProvider({ children }) {
                 s.id === studentId
                   ? {
                       ...s,
-                      paymentSum: newPaymentSum,
                       paymentHistory: updatedHistory,
-                      lessonPrice: newLessonPrice,
+                      lessonsSincePayment: 0,
                     }
                   : s,
               ),
@@ -398,20 +383,23 @@ export function GroupsProvider({ children }) {
     return { error: null };
   };
 
-  const adjustPaymentSum = async (groupId, studentId, delta) => {
+  // Attendance'da "keldi" belgilanganda +1, bekor qilinganda -1 —
+  // oxirgi to'lovdan beri kelgan darslar sonini kuzatib boradi
+  const adjustLessonsCount = async (groupId, studentId, delta) => {
     const group = groups.find((g) => g.id === groupId);
     const student = group?.students.find((s) => s.id === studentId);
     if (!student) return;
 
-    const newPaymentSum = (Number(student.paymentSum) || 0) + delta;
+    const current = Number(student.lessonsSincePayment) || 0;
+    const newCount = Math.max(0, current + delta);
 
     const { error } = await supabase
       .from("students")
-      .update({ payment_sum: newPaymentSum })
+      .update({ lessons_since_payment: newCount })
       .eq("id", studentId);
 
     if (error) {
-      console.error("Balansni o'zgartirishda xatolik:", error);
+      console.error("Dars hisoblagichini o'zgartirishda xatolik:", error);
       return;
     }
 
@@ -421,7 +409,9 @@ export function GroupsProvider({ children }) {
           ? {
               ...g,
               students: g.students.map((s) =>
-                s.id === studentId ? { ...s, paymentSum: newPaymentSum } : s,
+                s.id === studentId
+                  ? { ...s, lessonsSincePayment: newCount }
+                  : s,
               ),
             }
           : g,
@@ -477,7 +467,7 @@ export function GroupsProvider({ children }) {
         updateStudent,
         updateStudentPassword,
         addPayment,
-        adjustPaymentSum,
+        adjustLessonsCount,
         adjustCoins,
         deleteStudents,
         reorderStudents,
