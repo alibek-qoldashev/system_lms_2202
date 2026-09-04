@@ -333,6 +333,8 @@ export function GroupsProvider({ children }) {
 
   // O'quvchi to'lov qilganda: tarixga yoziladi va "oxirgi to'lovdan beri
   // kelgan darslar" hisoblagichi 0 ga tushiriladi (yangi 12 dars sikli boshlanadi)
+  // O'quvchi to'lov qilganda: tarixga yoziladi va "oxirgi to'lovdan beri
+  // kelgan darslar" hisoblagichi 12 taga kamaytiriladi (ortib qolgani keyingi oyga o'tadi)
   const addPayment = async (groupId, studentId, amount) => {
     const numAmount = Number(amount);
     if (!numAmount || numAmount <= 0) return { error: "Noto'g'ri summa" };
@@ -348,11 +350,15 @@ export function GroupsProvider({ children }) {
     };
     const updatedHistory = [newRecord, ...(student.paymentHistory || [])];
 
+    // MANTIQ O'ZGARDI: Joriy darslardan 12 ni ayiramiz. Agar noldan kichik bo'lsa, 0 qilib olamiz.
+    const currentLessons = Number(student.lessonsSincePayment) || 0;
+    const newLessonsCount = currentLessons >= 12 ? currentLessons - 12 : 0;
+
     const { error: studentError } = await supabase
       .from("students")
       .update({
         payment_history: updatedHistory,
-        lessons_since_payment: 0,
+        lessons_since_payment: newLessonsCount, // <--- 0 o'rniga yangi qiymat
       })
       .eq("id", studentId);
 
@@ -371,7 +377,7 @@ export function GroupsProvider({ children }) {
                   ? {
                       ...s,
                       paymentHistory: updatedHistory,
-                      lessonsSincePayment: 0,
+                      lessonsSincePayment: newLessonsCount, // <--- 0 o'rniga yangi qiymat
                     }
                   : s,
               ),
@@ -382,7 +388,6 @@ export function GroupsProvider({ children }) {
 
     return { error: null };
   };
-
   // Attendance'da "keldi" belgilanganda +1, bekor qilinganda -1 —
   // oxirgi to'lovdan beri kelgan darslar sonini kuzatib boradi
   const adjustLessonsCount = async (groupId, studentId, delta) => {
