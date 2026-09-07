@@ -8,9 +8,21 @@ import {
   Sparkles,
   ChevronRight,
   Clock,
+  AlertCircle,
 } from "lucide-react";
 import { useStudentAuth } from "../context/StudentAuthContext";
 import { supabase } from "../supabaseClient";
+
+const LESSONS_PER_CYCLE = 12;
+const WARNING_AT = 2; // shu qadar dars qolganda "sariq"
+
+// Dars soni asosida holatni aniqlaydi: "due", "warning", "ok"
+function getPaymentStatus(lessonsSincePayment) {
+  const count = Number(lessonsSincePayment) || 0;
+  if (count >= LESSONS_PER_CYCLE) return "due";
+  if (count >= LESSONS_PER_CYCLE - WARNING_AT) return "warning";
+  return "ok";
+}
 
 export default function StudentHome() {
   const navigate = useNavigate();
@@ -23,7 +35,7 @@ export default function StudentHome() {
     const fetchData = async () => {
       const { data: studentData, error: studentError } = await supabase
         .from("students")
-        .select("coins, name, surname, group_id")
+        .select("coins, name, surname, group_id, lessons_since_payment")
         .eq("id", student.id)
         .single();
 
@@ -79,6 +91,21 @@ export default function StudentHome() {
 
   if (!student) return null;
 
+  const lessonsSincePayment = Number(profile?.lessons_since_payment) || 0;
+  const paymentStatus = getPaymentStatus(lessonsSincePayment);
+  const lessonsLeft = Math.max(0, LESSONS_PER_CYCLE - lessonsSincePayment);
+
+  const paymentBannerStyle = {
+    ok: "bg-white/5 border-white/10 text-white/70",
+    warning: "bg-amber-500/15 border-amber-500/30 text-amber-300",
+    due: "bg-rose-500/15 border-rose-500/30 text-rose-300",
+  }[paymentStatus];
+
+  const paymentBannerText =
+    paymentStatus === "due"
+      ? "To'lov qilish kerak"
+      : `${lessonsLeft} dars qoldi`;
+
   return (
     <div className="min-h-screen w-full bg-[#090d16] text-slate-100 flex justify-center relative overflow-hidden">
       <div className="absolute -top-24 -left-20 w-72 h-72 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
@@ -86,7 +113,7 @@ export default function StudentHome() {
 
       <div className="w-full max-w-md flex flex-col items-center px-5 pt-12 pb-10 z-10">
         {/* Top Header Bar */}
-        <div className="w-full flex items-center justify-between mb-8">
+        <div className="w-full flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-medium text-slate-400 tracking-wider uppercase">
@@ -102,6 +129,28 @@ export default function StudentHome() {
             <UserCircle className="w-6 h-6 text-slate-300 group-hover:text-white transition-colors" />
           </button>
         </div>
+
+        {/* To'lov holati banneri */}
+        {!loading && profile && (
+          <div
+            className={`w-full mb-6 px-4 py-3 rounded-2xl border backdrop-blur-xl flex items-center justify-between gap-3 ${paymentBannerStyle}`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {paymentStatus !== "ok" && (
+                <AlertCircle className="w-4 h-4 shrink-0" />
+              )}
+              <span className="text-sm font-semibold truncate">
+                To'lovga {paymentBannerText}
+                 
+              </span>
+            </div>
+            {paymentStatus !== "due" && (
+              <span className="text-xs font-medium opacity-70 shrink-0 tabular-nums">
+               {lessonsSincePayment}/{LESSONS_PER_CYCLE} dars
+              </span>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="w-full space-y-6 animate-pulse">
