@@ -11,24 +11,41 @@ import {
   Sparkles,
   ShoppingBag,
   Lock,
+  Pen,
+  NotebookText,
+  Sticker,
+  Calendar,
+  Highlighter,
+  Coffee,
+  Headphones,
+  Speaker,
+  BookOpen,
+  Backpack,
+  Shirt,
 } from "lucide-react";
 import { useStudentAuth } from "../context/StudentAuthContext";
 import { supabase } from "../supabaseClient";
 
 // Sovg'alar ro'yxati
 const GIFTS = [
-  { id: "book", name: "Essential Words 4000", cost: 5000 },
-  { id: "pen-set", name: "Ruchka to'plami", cost: 1500 },
-  { id: "notebook", name: "Daftar", cost: 1000 },
-  { id: "bag", name: "Sumka", cost: 8000 },
-  { id: "tshirt", name: "Futbolka", cost: 6000 },
-  { id: "cup", name: "Stakan", cost: 2000 },
-  { id: "candy", name: "Konfet to'plami", cost: 1200 },
-  { id: "toy", name: "O'yinchoq", cost: 3000 },
-  { id: "headphones", name: "Naushnik", cost: 10000 },
-  { id: "powerbank", name: "Powerbank", cost: 12000 },
-  { id: "cap", name: "Kepka", cost: 3500 },
-  { id: "watch", name: "Sport soat", cost: 15000 },
+  { id: "pen-set", name: "Qalam + Ruchka", cost: 2000, icon: Pen },
+  { id: "notebook", name: "Bloknot", cost: 4000, icon: NotebookText },
+  { id: "sticker-set", name: "Stiker to'plami", cost: 5000, icon: Sticker },
+  { id: "calendar", name: "Kalendar", cost: 6000, icon: Calendar },
+  { id: "markers", name: "Markerlar to'plami", cost: 7000, icon: Highlighter },
+  { id: "cup", name: "Stakan", cost: 6000, icon: Coffee },
+  { id: "headphones", name: "Quloqchin", cost: 13000, icon: Headphones },
+  { id: "speaker", name: "Speaker", cost: 15000, icon: Speaker },
+  { id: "essential-words", name: "Essential Words", cost: 6000, icon: BookOpen },
+  {
+    id: "ielts-speaking-structure",
+    name: "IELTS Speaking Structure",
+    cost: 7000,
+    icon: BookOpen,
+  },
+  { id: "grammarway", name: "Grammarway", cost: 5000, icon: BookOpen },
+  { id: "bag", name: "Sumka", cost: 12000, icon: Backpack },
+  { id: "tshirt", name: "Futbolka", cost: 15000, icon: Shirt },
 ];
 
 const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
@@ -222,13 +239,14 @@ export default function UseCoins() {
           <div className="w-full grid grid-cols-2 gap-3">
             {GIFTS.map((gift) => {
               const canAfford = myCoins >= gift.cost;
+              const GiftIcon = gift.icon || Gift;
               return (
                 <div
                   key={gift.id}
                   className="group relative rounded-2xl p-4 bg-slate-900/60 border border-white/10 backdrop-blur-xl flex flex-col items-center justify-between gap-3 transition-all duration-300 hover:border-white/20"
                 >
                   <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300">
-                    <Gift className="w-7 h-7" />
+                    <GiftIcon className="w-7 h-7" />
                   </div>
 
                   <div className="flex flex-col items-center text-center">
@@ -289,7 +307,11 @@ export default function UseCoins() {
 
             <div className="flex flex-col items-center text-center mt-2 mb-6">
               <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-3">
-                <Gift className="w-8 h-8" />
+                {selectedGift.icon ? (
+                  <selectedGift.icon className="w-8 h-8" />
+                ) : (
+                  <Gift className="w-8 h-8" />
+                )}
               </div>
               <h2 className="text-lg font-bold text-white">
                 {selectedGift.name}
