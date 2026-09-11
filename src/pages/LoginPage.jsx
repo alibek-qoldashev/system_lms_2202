@@ -5,7 +5,7 @@ import { supabase } from "../supabaseClient";
 import Icon2 from "../img/icon2.png";
 
 const TEACHER_USERNAME = "Viloyat";
-const TEACHER_PASSWORD = "2202";
+const TEACHER_PASSWORD = "1987";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
