@@ -92,7 +92,7 @@ export default function Home() {
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("isAuthenticated");
     setShowLogoutModal(false);
     navigate("/");
   };

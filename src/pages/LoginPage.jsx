@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     // 1) Avval o'qituvchi login/parolini tekshiramiz
     if (username === TEACHER_USERNAME && password === TEACHER_PASSWORD) {
-      localStorage.setItem("isAuthenticated", "true");
+      sessionStorage.setItem("isAuthenticated", "true");
       navigate("/home");
       return;
     }

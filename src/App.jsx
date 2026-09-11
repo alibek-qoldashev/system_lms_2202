@@ -21,7 +21,7 @@ import Homeworks from "./pages/Homeworks";
 import StudentHomework from "./pages/StudentHomework";
 
 function isAuthenticated() {
-  return localStorage.getItem("isAuthenticated") === "true";
+  return sessionStorage.getItem("isAuthenticated") === "true";
 }
 
 // Login sahifasi: agar allaqachon teacher sifatida login qilingan bo'lsa, Home'ga o'tkazadi
