@@ -15,21 +15,23 @@ import StudentCoins from "./pages/Studentcoins";
 import { TestsProvider } from "./pages/TestsContext";
 import Tests from "./pages/Tests";
 import CardQuestions from "./pages/CardQuestions";
+import Settings from "./pages/Settings";
 
 import UseCoins from "./pages/UseCoins";
 import Homeworks from "./pages/Homeworks";
 import StudentHomework from "./pages/StudentHomework";
 
+// Yangi qo'shilgan sahifa
+import Devices from "./pages/Devices";
+
 function isAuthenticated() {
   return sessionStorage.getItem("isAuthenticated") === "true";
 }
 
-// Login sahifasi: agar allaqachon teacher sifatida login qilingan bo'lsa, Home'ga o'tkazadi
 function LoginRoute() {
   return isAuthenticated() ? <Navigate to="/home" replace /> : <LoginPage />;
 }
 
-// Teacher uchun himoyalangan sahifalar
 function RequireAuth({ children }) {
   return isAuthenticated() ? children : <Navigate to="/" replace />;
 }
@@ -48,6 +50,22 @@ const App = () => {
                 element={
                   <RequireAuth>
                     <Home />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <RequireAuth>
+                    <Settings />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/devices"
+                element={
+                  <RequireAuth>
+                    <Devices />
                   </RequireAuth>
                 }
               />
@@ -86,7 +104,6 @@ const App = () => {
                 }
               />
 
-              {/* Student sahifasi — RequireAuth emas, RequireStudentAuth bilan himoyalanadi */}
               <Route
                 path="/studenthome"
                 element={
