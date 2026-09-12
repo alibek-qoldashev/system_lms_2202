@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 export default function Devices() {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [removingId, setRemovingId] = useState(null);
   const navigate = useNavigate();
 
   const currentToken = localStorage.getItem("teacher_device_token");
@@ -34,14 +35,43 @@ export default function Devices() {
       return;
     }
 
-    if (window.confirm(`${name} qurilmasini tizimdan chiqarib yubormoqchimisiz?`)) {
-      const { error } = await supabase.from("teacher_devices").delete().eq("id", id);
-      if (!error) {
-        setDevices(devices.filter((d) => d.id !== id));
-      } else {
-        alert("Xatolik: " + error.message);
-      }
+    if (!window.confirm(`${name} qurilmasini tizimdan chiqarib yubormoqchimisiz?`)) {
+      return;
     }
+
+    setRemovingId(id);
+
+    // MUHIM: .select() qo'shildi — shu orqali haqiqatan nechta qator
+    // o'chirilganini bilamiz. Ba'zan RLS/policy sababli so'rov "xatosiz"
+    // qaytadi, lekin aslida 0 ta qator o'chirilgan bo'ladi.
+    const { data, error } = await supabase
+      .from("teacher_devices")
+      .delete()
+      .eq("id", id)
+      .select();
+
+    setRemovingId(null);
+
+    if (error) {
+      alert("Xatolik: " + error.message);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      alert(
+        "Diqqat: so'rov xatosiz qaytdi, lekin hech qanday qator o'chirilmadi.\n\n" +
+          "Bu odatda Supabase'da 'teacher_devices' jadvalida RLS yoqilgan va DELETE " +
+          "uchun policy yo'qligini bildiradi. SQL Editor'da tekshiring:\n\n" +
+          "alter table teacher_devices disable row level security;",
+      );
+      // Haqiqiy holatni ko'rish uchun serverdan qayta yuklaymiz —
+      // ekrandan "optimistik" olib tashlamaymiz, chunki u yolg'on ko'rinish beradi.
+      await fetchDevices();
+      return;
+    }
+
+    // Haqiqatan o'chirilgani tasdiqlandi — endi serverdan qayta yuklaymiz
+    await fetchDevices();
   };
 
   const getDeviceIcon = (name) => {
@@ -95,6 +125,7 @@ export default function Devices() {
         <div className="space-y-4">
           {devices.map((device) => {
             const isCurrent = device.device_token === currentToken;
+            const isRemoving = removingId === device.id;
             return (
               <div
                 key={device.id}
@@ -128,11 +159,14 @@ export default function Devices() {
                 {isMacBook && !isCurrent && (
                   <button
                     onClick={() => handleKickOut(device.id, device.device_name)}
-                    className="p-3 bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 rounded-xl border border-rose-500/30 transition flex items-center gap-2 shrink-0 text-sm font-medium"
+                    disabled={isRemoving}
+                    className="p-3 bg-rose-500/20 hover:bg-rose-500/40 disabled:opacity-50 text-rose-300 rounded-xl border border-rose-500/30 transition flex items-center gap-2 shrink-0 text-sm font-medium"
                     title="Tizimdan chiqarish"
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Chiqarish</span>
+                    <span className="hidden sm:inline">
+                      {isRemoving ? "..." : "Chiqarish"}
+                    </span>
                   </button>
                 )}
               </div>
