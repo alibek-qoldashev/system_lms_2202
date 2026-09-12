@@ -332,8 +332,6 @@ export function GroupsProvider({ children }) {
   // --- FINANCIAL & COIN ACTIONS ---
 
   // O'quvchi to'lov qilganda: tarixga yoziladi va "oxirgi to'lovdan beri
-  // kelgan darslar" hisoblagichi 0 ga tushiriladi (yangi 12 dars sikli boshlanadi)
-  // O'quvchi to'lov qilganda: tarixga yoziladi va "oxirgi to'lovdan beri
   // kelgan darslar" hisoblagichi 12 taga kamaytiriladi (ortib qolgani keyingi oyga o'tadi)
   const addPayment = async (groupId, studentId, amount) => {
     const numAmount = Number(amount);
@@ -350,7 +348,6 @@ export function GroupsProvider({ children }) {
     };
     const updatedHistory = [newRecord, ...(student.paymentHistory || [])];
 
-    // MANTIQ O'ZGARDI: Joriy darslardan 12 ni ayiramiz. Agar noldan kichik bo'lsa, 0 qilib olamiz.
     const currentLessons = Number(student.lessonsSincePayment) || 0;
     const newLessonsCount = currentLessons >= 12 ? currentLessons - 12 : 0;
 
@@ -358,7 +355,7 @@ export function GroupsProvider({ children }) {
       .from("students")
       .update({
         payment_history: updatedHistory,
-        lessons_since_payment: newLessonsCount, // <--- 0 o'rniga yangi qiymat
+        lessons_since_payment: newLessonsCount,
       })
       .eq("id", studentId);
 
@@ -377,7 +374,7 @@ export function GroupsProvider({ children }) {
                   ? {
                       ...s,
                       paymentHistory: updatedHistory,
-                      lessonsSincePayment: newLessonsCount, // <--- 0 o'rniga yangi qiymat
+                      lessonsSincePayment: newLessonsCount,
                     }
                   : s,
               ),
@@ -388,6 +385,7 @@ export function GroupsProvider({ children }) {
 
     return { error: null };
   };
+
   // Attendance'da "keldi" belgilanganda +1, bekor qilinganda -1 —
   // oxirgi to'lovdan beri kelgan darslar sonini kuzatib boradi
   const adjustLessonsCount = async (groupId, studentId, delta) => {
@@ -424,7 +422,10 @@ export function GroupsProvider({ children }) {
     );
   };
 
-  const adjustCoins = async (groupId, studentId, delta) => {
+  // Coinlarni o'zgartirish (Homework/Classwork/Extrawork/Tartib va h.k.).
+  // "reason" endi coin_transactions jadvaliga ham yoziladi — shu orqali
+  // CoinHistoryModal'da "nima uchun" berilgani/olingani ko'rinadi.
+  const adjustCoins = async (groupId, studentId, delta, reason = null) => {
     const group = groups.find((g) => g.id === groupId);
     const student = group?.students.find((s) => s.id === studentId);
     if (!student) return { error: "O'quvchi topilmadi" };
@@ -439,6 +440,23 @@ export function GroupsProvider({ children }) {
     if (error) {
       console.error("Coinsni o'zgartirishda xatolik:", error);
       return { error: error.message };
+    }
+
+    // MUHIM: bu qism avval umuman yo'q edi — shuning uchun coin tarixi
+    // doim bo'sh ko'rinardi. Har bir o'zgarish endi sababi bilan yoziladi.
+    const { error: historyError } = await supabase
+      .from("coin_transactions")
+      .insert({
+        student_id: studentId,
+        group_id: groupId,
+        amount: delta,
+        reason,
+      });
+
+    if (historyError) {
+      // Coin allaqachon o'zgargan, faqat tarix yozilmadi — jiddiy emas,
+      // lekin keyinchalik tekshirish uchun konsolga chiqaramiz.
+      console.error("Coin tarixini yozishda xatolik:", historyError);
     }
 
     setGroups((prev) =>

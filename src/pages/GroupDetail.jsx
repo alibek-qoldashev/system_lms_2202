@@ -99,6 +99,12 @@ export default function GroupDetail() {
     );
   }
 
+  // Ro'yxatni coin bo'yicha (ko'pdan kamga) tartiblab ko'rsatamiz.
+  // Bu faqat vizual tartib — bazadagi "position" maydonini o'zgartirmaydi.
+  const sortedStudents = [...group.students].sort(
+    (a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0),
+  );
+
   const handleAddStudent = () => {
     if (!form.name.trim()) return;
     addStudent(group.id, {
@@ -127,9 +133,9 @@ export default function GroupDetail() {
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = group.students.findIndex((s) => s.id === active.id);
-    const newIndex = group.students.findIndex((s) => s.id === over.id);
-    reorderStudents(group.id, arrayMove(group.students, oldIndex, newIndex));
+    const oldIndex = sortedStudents.findIndex((s) => s.id === active.id);
+    const newIndex = sortedStudents.findIndex((s) => s.id === over.id);
+    reorderStudents(group.id, arrayMove(sortedStudents, oldIndex, newIndex));
   };
 
   // --- Guruhni edit qilish ---
@@ -331,11 +337,11 @@ export default function GroupDetail() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={group.students.map((s) => s.id)}
+                items={sortedStudents.map((s) => s.id)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="flex flex-col gap-3">
-                  {group.students.map((student, index) => (
+                  {sortedStudents.map((student, index) => (
                     <SortableStudentRow
                       key={student.id}
                       student={student}
