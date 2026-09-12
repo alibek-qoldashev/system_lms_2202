@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Clock,
   AlertCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useStudentAuth } from "../context/StudentAuthContext";
 import { supabase } from "../supabaseClient";
@@ -29,6 +30,7 @@ export default function StudentHome() {
   const { student } = useStudentAuth();
   const [profile, setProfile] = useState(null);
   const [hasHomework, setHasHomework] = useState(false);
+  const [hasComplaint, setHasComplaint] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,6 +64,25 @@ export default function StudentHome() {
             if (viewedHomeworkId !== String(latestHomeworkId)) {
               setHasHomework(true);
             }
+          }
+        }
+
+        // Yangi shikoyat bor-yo'qligini tekshiramiz
+        const { data: complaintData, error: complaintError } = await supabase
+          .from("complaints")
+          .select("id")
+          .eq("student_id", student.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (!complaintError && complaintData && complaintData.length > 0) {
+          const latestComplaintId = complaintData[0].id;
+          const viewedComplaintId = localStorage.getItem(
+            `viewed_complaint_${student.id}`,
+          );
+
+          if (viewedComplaintId !== String(latestComplaintId)) {
+            setHasComplaint(true);
           }
         }
       }
@@ -141,12 +162,11 @@ export default function StudentHome() {
               )}
               <span className="text-sm font-semibold truncate">
                 To'lovga {paymentBannerText}
-                 
               </span>
             </div>
             {paymentStatus !== "due" && (
               <span className="text-xs font-medium opacity-70 shrink-0 tabular-nums">
-               {lessonsSincePayment}/{LESSONS_PER_CYCLE} dars
+                {lessonsSincePayment}/{LESSONS_PER_CYCLE} dars
               </span>
             )}
           </div>
@@ -260,6 +280,32 @@ export default function StudentHome() {
 
                   <div className="w-full pt-1 flex justify-center border-t border-white/5">
                     <ChevronRight className="w-3.5 h-3.5 text-blue-400/60 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+
+                {/* SHIKOYAT CARD (qizil "!" bildirishnoma bilan) */}
+                <button
+                  onClick={() => navigate("/student/complaints")}
+                  className="group relative rounded-2xl p-3 bg-gradient-to-b from-rose-500/10 via-slate-900/60 to-slate-900/90 border border-rose-500/20 hover:border-rose-500/40 backdrop-blur-xl flex flex-col items-center justify-between gap-3 transition-all duration-300 hover:-translate-y-1 active:scale-95 shadow-lg hover:shadow-rose-500/10"
+                >
+                  {hasComplaint && (
+                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[11px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-bounce">
+                      !
+                    </span>
+                  )}
+
+                  <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 group-hover:scale-110 transition-transform duration-300">
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs font-bold text-white mt-1">
+                      Shikoyat
+                    </span>
+                  </div>
+
+                  <div className="w-full pt-1 flex justify-center border-t border-white/5">
+                    <ChevronRight className="w-3.5 h-3.5 text-rose-400/60 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
               </div>

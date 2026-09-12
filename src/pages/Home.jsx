@@ -7,6 +7,7 @@ import {
   LogOut,
   BookOpen,
   Settings, // Ikonkani import qildik
+  AlertTriangle,
 } from "lucide-react";
 import Icon2 from "../img/icon2.png";
 
@@ -86,12 +87,22 @@ const menuCards = [
     path: "/settings",
     icon: (
       <Settings
-        className="w-9 h-9 text-slate-300 drop-shadow-[0_0_8px_rgba(148,163,184,0.5)]"
+        className="w-9 h-9 text-gray-400 drop-shadow-[0_0_8px_rgba(148,163,184,0.5)]"
         strokeWidth={2}
       />
     ),
   },
-  { key: "upcoming_last", label: "Upcoming...", path: null, icon: null },
+  {
+    key: "complaints",
+    label: "Shikoyat",
+    path: "/complaints",
+    icon: (
+      <AlertTriangle
+        className="w-9 h-9 text-red-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]"
+        strokeWidth={2}
+      />
+    ),
+  },
 ];
 
 export default function Home() {

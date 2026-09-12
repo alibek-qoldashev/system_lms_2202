@@ -475,6 +475,28 @@ export function GroupsProvider({ children }) {
     return { error: null };
   };
 
+  // --- COMPLAINTS ---
+
+  // Shikoyatni saqlash. Coin ayirish shart emas — faqat matn saqlanadi.
+  const sendComplaint = async (groupId, studentId, text) => {
+    if (!text || !text.trim()) {
+      return { error: "Matn bo'sh bo'lishi mumkin emas" };
+    }
+
+    const { error } = await supabase.from("complaints").insert({
+      student_id: studentId,
+      group_id: groupId,
+      text,
+    });
+
+    if (error) {
+      console.error("Shikoyatni saqlashda xatolik:", error);
+      return { error: error.message };
+    }
+
+    return { error: null };
+  };
+
   // --- UTILS ---
   const getGroup = (groupId) =>
     groups.find((g) => String(g.id) === String(groupId));
@@ -492,6 +514,7 @@ export function GroupsProvider({ children }) {
         addPayment,
         adjustLessonsCount,
         adjustCoins,
+        sendComplaint,
         deleteStudents,
         reorderStudents,
         deleteGroups,

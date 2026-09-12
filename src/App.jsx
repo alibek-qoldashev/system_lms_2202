@@ -17,7 +17,8 @@ import Tests from "./pages/Tests";
 import CardQuestions from "./pages/CardQuestions";
 import Settings from "./pages/Settings";
 import { supabase } from "./supabaseClient";
-
+import Complaints from "./pages/Complaints";
+import StudentComplaints from "./pages/StudentComplaints";
 import UseCoins from "./pages/UseCoins";
 import Homeworks from "./pages/Homeworks";
 import StudentHomework from "./pages/StudentHomework";
@@ -128,6 +129,15 @@ const App = () => {
                   <RequireAuth>
                     <Home />
                   </RequireAuth>
+                }
+              />
+              <Route path="/complaints" element={<Complaints />} />
+              <Route
+                path="/student/complaints"
+                element={
+                  <RequireStudentAuth>
+                    <StudentComplaints />
+                  </RequireStudentAuth>
                 }
               />
               <Route
